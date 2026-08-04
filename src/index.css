@@ -1,0 +1,368 @@
+/*
+ * Motyw: jasny fiolet.
+ *
+ * Kolory trzymane w zmiennych CSS, żeby odcień dało się zmienić w jednym miejscu,
+ * a nie w piętnastu regułach. --violet-600 to kolor akcji (przyciski, linki, focus),
+ * --violet-050..200 budują tło i obramowania.
+ */
+
+:root {
+  --violet-050: #f7f4ff;
+  --violet-100: #ede7ff;
+  --violet-200: #ddd2fb;
+  --violet-300: #c4b1f6;
+  --violet-400: #a586ee;
+  --violet-500: #8b5fe6;
+  --violet-600: #7745d8;
+  --violet-700: #6134b4;
+
+  --ink: #2b2440;
+  --ink-soft: #6b6285;
+  --surface: #ffffff;
+  --border: #e7e0f7;
+
+  --danger: #b42318;
+  --danger-bg: #fdf3f2;
+  --danger-border: #f5c9c4;
+  --success: #17734b;
+  --success-bg: #f0faf5;
+  --success-border: #b8e5cd;
+  --info-bg: var(--violet-050);
+  --info-border: var(--violet-200);
+
+  --radius: 14px;
+  --shadow: 0 18px 40px -18px rgba(88, 52, 168, 0.35);
+
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
+  color: var(--ink);
+  /* Delikatny gradient zamiast płaskiego szarego tła - stąd bierze się "jasnofioletowy"
+     charakter całości, bez malowania każdego elementu na fiolet. */
+  background:
+    radial-gradient(1100px 620px at 12% -12%, var(--violet-100), transparent 62%),
+    radial-gradient(900px 520px at 92% 8%, #f3e9ff, transparent 58%),
+    var(--violet-050);
+  background-attachment: fixed;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+/* ---------- karta ---------- */
+
+.card {
+  width: 100%;
+  max-width: 420px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.card-wide {
+  max-width: 560px;
+}
+
+.card-head h1 {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+}
+
+.card-head .muted {
+  margin: 6px 0 0;
+}
+
+.card-head.row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.muted {
+  color: var(--ink-soft);
+  font-size: 14px;
+  margin: 0;
+}
+
+.card-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--ink-soft);
+}
+
+a {
+  color: var(--violet-600);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+a:hover {
+  color: var(--violet-700);
+  text-decoration: underline;
+}
+
+/* ---------- formularz ---------- */
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.input {
+  width: 100%;
+  padding: 11px 13px;
+  font-size: 15px;
+  font-family: inherit;
+  color: var(--ink);
+  background: var(--violet-050);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.input:hover {
+  border-color: var(--violet-300);
+}
+
+.input:focus {
+  outline: none;
+  background: var(--surface);
+  border-color: var(--violet-500);
+  /* Widoczny pierścień focusu to wymóg dostępności, nie ozdoba - bez niego osoba
+     poruszająca się po formularzu tabem nie wie, gdzie jest. */
+  box-shadow: 0 0 0 3px rgba(139, 95, 230, 0.22);
+}
+
+.field-error {
+  font-size: 13px;
+  color: var(--danger);
+}
+
+.field-hint {
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+/* ---------- przyciski ---------- */
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 12px 16px;
+  font-size: 15px;
+  font-weight: 650;
+  font-family: inherit;
+  color: #fff;
+  background: linear-gradient(180deg, var(--violet-500), var(--violet-600));
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: filter 0.15s, box-shadow 0.15s, transform 0.05s;
+  box-shadow: 0 8px 18px -8px rgba(119, 69, 216, 0.7);
+}
+
+.button:hover:not(:disabled) {
+  filter: brightness(1.06);
+  text-decoration: none;
+  color: #fff;
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(139, 95, 230, 0.35);
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.button-ghost {
+  color: var(--violet-700);
+  background: var(--violet-100);
+  box-shadow: none;
+}
+
+.button-ghost:hover:not(:disabled) {
+  color: var(--violet-700);
+  background: var(--violet-200);
+}
+
+/* ---------- komunikaty ---------- */
+
+.alert {
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.45;
+  border: 1px solid transparent;
+}
+
+.alert-error {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
+.alert-success {
+  color: var(--success);
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.alert-info {
+  color: var(--violet-700);
+  background: var(--info-bg);
+  border-color: var(--info-border);
+}
+
+.alert-trace {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.85;
+}
+
+.alert-trace code {
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  letter-spacing: 0.02em;
+  user-select: all; /* jedno kliknięcie zaznacza całość - user ma to przepisać albo skopiować */
+}
+
+/* ---------- dashboard ---------- */
+
+.badge {
+  flex-shrink: 0;
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--violet-700);
+  background: var(--violet-100);
+  border: 1px solid var(--violet-200);
+  border-radius: 999px;
+}
+
+.details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.details > div {
+  padding: 12px 14px;
+  background: var(--violet-050);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.details dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.details dd {
+  margin: 4px 0 0;
+  font-size: 15px;
+  word-break: break-word;
+}
+
+/* ---------- spinner ---------- */
+
+.spinner-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 28px 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 2.5px solid var(--violet-200);
+  border-top-color: var(--violet-600);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Szanujemy ustawienie systemowe - animacja w kółko potrafi być męcząca
+   dla osób wrażliwych na ruch. */
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 2.4s;
+  }
+  * {
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .card {
+    padding: 24px 20px;
+  }
+}
