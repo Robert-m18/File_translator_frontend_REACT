@@ -41,7 +41,7 @@ export default function ConfirmEmail() {
   }, [token]);
 
   return (
-    <div className="card">
+    <div className="card card-lg">
       <header className="card-head">
         <h1>Potwierdzenie adresu</h1>
       </header>

@@ -41,7 +41,7 @@ export default function ForgotPassword() {
   // które adresy mają konto, i front nie może tego obejść własnym tekstem.
   if (sent) {
     return (
-      <div className="card">
+      <div className="card card-lg">
         <header className="card-head">
           <h1>Sprawdź skrzynkę</h1>
         </header>
@@ -57,7 +57,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div className="card">
+    <div className="card card-lg">
       <header className="card-head">
         <h1>Nie pamiętam hasła</h1>
         <p className="muted">Wyślemy link do ustawienia nowego</p>

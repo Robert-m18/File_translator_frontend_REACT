@@ -37,7 +37,7 @@ export default function Register() {
    */
   if (done) {
     return (
-      <div className="card">
+      <div className="card card-lg">
         <header className="card-head">
           <h1>Sprawdź skrzynkę</h1>
         </header>
@@ -53,7 +53,7 @@ export default function Register() {
   }
 
   return (
-    <div className="card">
+    <div className="card card-lg">
       <header className="card-head">
         <h1>Załóż konto</h1>
         <p className="muted">Zajmie chwilę</p>

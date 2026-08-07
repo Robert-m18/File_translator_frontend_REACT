@@ -64,6 +64,13 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* body jest flexboksem, a #root jego jedynym flex itemem. Bez tej szerokości #root
+   dostaje rozmiar "shrink-to-fit" (tyle, ile zajmuje treść), więc width:100% niżej
+   liczy się od tej zwężonej wartości i max-width karty nigdy nie dochodzi do głosu. */
+#root {
+  width: 100%;
+}
+
 .container {
   width: 100%;
   display: flex;
@@ -74,7 +81,7 @@ body {
 
 .card {
   width: 100%;
-  max-width: 420px;
+  max-width: 620px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
@@ -86,7 +93,11 @@ body {
 }
 
 .card-wide {
-  max-width: 560px;
+  max-width: 760px;
+}
+
+.card-lg {
+  max-width: 500px;
 }
 
 .card-head h1 {

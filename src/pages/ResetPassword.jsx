@@ -46,7 +46,7 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div className="card">
+      <div className="card card-lg">
         <header className="card-head">
           <h1>Ustaw nowe hasło</h1>
         </header>
@@ -60,7 +60,7 @@ export default function ResetPassword() {
 
   if (done) {
     return (
-      <div className="card">
+      <div className="card card-lg">
         <header className="card-head">
           <h1>Hasło zmienione</h1>
         </header>
@@ -76,7 +76,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <div className="card">
+    <div className="card card-lg">
       <header className="card-head">
         <h1>Ustaw nowe hasło</h1>
       </header>

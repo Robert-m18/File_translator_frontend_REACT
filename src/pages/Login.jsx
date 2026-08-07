@@ -42,7 +42,7 @@ export default function Login() {
   }
 
   return (
-    <div className="card">
+    <div className="card card-lg">
       <header className="card-head">
         <h1>Zaloguj się</h1>
         <p className="muted">Witamy z powrotem</p>
