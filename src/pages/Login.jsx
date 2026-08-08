@@ -1,10 +1,20 @@
 import { useState } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/context';
 import { validateEmail } from '../utils/validation';
 import Alert from '../components/Alert';
 
 export default function Login() {
+  /*
+   * ?confirmed=1 ustawia ConfirmEmail po udanym potwierdzeniu adresu. Nośnikiem jest ADRES,
+   * a nie stan routera ani localStorage: stan ginie przy odświeżeniu, a to właśnie
+   * odświeżenie było tu pierwotnym problemem - dopóki token siedział w adresie strony
+   * potwierdzenia, F5 wysyłało go drugi raz i użytkownik po udanym potwierdzeniu widział
+   * błąd o nieprawidłowym linku.
+   */
+  const [searchParams] = useSearchParams();
+  const justConfirmed = searchParams.get('confirmed') === '1';
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState({});
@@ -47,6 +57,12 @@ export default function Login() {
         <h1>Zaloguj się</h1>
         <p className="muted">Witamy z powrotem</p>
       </header>
+
+      {justConfirmed && (
+        <Alert type="success">
+          Adres potwierdzony, konto jest gotowe. Możesz się zalogować.
+        </Alert>
+      )}
 
       <form className="form" onSubmit={handleSubmit} noValidate>
         <label className="field">

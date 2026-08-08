@@ -1,0 +1,60 @@
+# Całe środowisko - frontend, backend, baza, SMTP, Redis - jedną komendą:
+#
+#     docker compose up -d --build
+#
+# Uruchamiane Z TEGO katalogu. Backend nie jest tu duplikowany: sekcja "include"
+# wciąga jego docker-compose.yml, więc źródłem prawdy o bazie, mailu i aplikacji
+# pozostaje repozytorium backendu, a tutaj dochodzi wyłącznie frontend.
+
+# Nazwa projektu narzucona ręcznie i to nie jest kosmetyka.
+#
+# Domyślnie Compose bierze nazwę z katalogu, czyli "file_translator_frontend".
+# Backend nadaje swoim kontenerom stałe container_name (ft-postgres, ft-app...),
+# a te są globalne dla całego demona, nie dla projektu - start pod inną nazwą
+# skończyłby się błędem "container name /ft-postgres is already in use" albo
+# drugim kompletem kontenerów walczącym o te same porty. Ta sama nazwa co po
+# stronie backendu sprawia, że to jeden projekt, a nie dwa równoległe.
+name: file_translator
+
+include:
+  # Ścieżka względem TEGO pliku. Gdy backend leży gdzie indziej, nie trzeba
+  # ruszać pliku - wystarczy BACKEND_PATH w .env obok niego albo w środowisku.
+  - path: ${BACKEND_PATH:-../Downloads/file_translator}/docker-compose.yml
+
+services:
+
+  frontend:
+    build:
+      context: .
+      args:
+        # Adres, pod który uderza PRZEGLĄDARKA, więc "localhost" i port wystawiony
+        # na hoście przez usługę app - nie nazwa usługi z sieci Compose'a.
+        # Nazwa "app" rozwiązuje się wyłącznie wewnątrz sieci kontenerów,
+        # a ten kod wykonuje się na maszynie użytkownika.
+        VITE_API_BASE: http://localhost:2009
+    container_name: ft-frontend
+    ports:
+      # Port 5173 jest wymuszony, a nie przypadkowy: backend przepuszcza przez
+      # CORS wyłącznie origin z FRONTEND_URL (http://localhost:5173) i przy
+      # ciasteczkach nie może użyć "*". Pod innym portem przeglądarka odrzuciłaby
+      # każde żądanie - z błędem CORS w konsoli, więc przyczyny szukałoby się
+      # zupełnie gdzie indziej.
+      #
+      # Ten sam port zajmuje "npm run dev". Obie rzeczy naraz nie wstaną -
+      # albo kontener, albo serwer deweloperski z HMR.
+      - "5173:80"
+    depends_on:
+      # Tylko kolejność startu. Statyczne pliki serwują się niezależnie od tego,
+      # czy API odpowiada - condition: service_healthy kazałoby czekać do minuty
+      # na rozgrzanie Springa, zanim w ogóle dałoby się otworzyć stronę.
+      - app
+    healthcheck:
+      # 127.0.0.1, nie "localhost". Wewnątrz kontenera localhost rozwiązuje się
+      # najpierw na ::1, a nginx nasłuchuje wyłącznie na IPv4 - wget dostawał
+      # "connection refused" i kontener wisiał w stanie "health: starting",
+      # mimo że z hosta strona serwowała się poprawnie.
+      test: [ "CMD", "wget", "-qO-", "http://127.0.0.1/" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s

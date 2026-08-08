@@ -1,0 +1,25 @@
+# Im mniejszy kontekst budowania, tym szybszy build.
+#
+# node_modules jest tu najważniejsze: katalog waży setki megabajtów, a i tak
+# zostaje nadpisany przez "npm ci" w obrazie. Wysyłanie go do demona Dockera
+# to czysta strata czasu - a przy zależnościach kompilowanych natywnie także
+# ryzyko wciągnięcia binariów zbudowanych pod Windowsa do obrazu Alpine.
+node_modules/
+dist/
+
+.git/
+.gitignore
+.idea/
+.vscode/
+.claude/
+CLAUDE.md
+
+# Lokalne nadpisania zmiennych środowiskowych zostają na maszynie - do obrazu
+# trafia to, co poda "docker compose build" przez build args.
+.env
+.env.*
+*.local
+
+Dockerfile
+.dockerignore
+docker-compose.yml
