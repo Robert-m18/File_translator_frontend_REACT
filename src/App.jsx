@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Translations from './pages/Translations';
 import ConfirmEmail from './pages/ConfirmEmail';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
@@ -40,6 +41,19 @@ export default function App() {
           element={
             <RequireAuth>
               <Dashboard />
+            </RequireAuth>
+          }
+        />
+        {/*
+          Ta ścieżka też jest sklejana po stronie serwera: mail "tłumaczenie gotowe"
+          prowadzi wprost tutaj (EmailService.sendTranslationDoneEmail), więc obowiązuje
+          ją ta sama zasada co adresy wyżej.
+        */}
+        <Route
+          path="/translations"
+          element={
+            <RequireAuth>
+              <Translations />
             </RequireAuth>
           }
         />

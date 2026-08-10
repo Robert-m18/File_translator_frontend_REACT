@@ -377,3 +377,120 @@ a:hover {
     padding: 24px 20px;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   Tłumaczenie plików
+   --------------------------------------------------------------------------- */
+
+/* Zachęta na dashboardzie - jedyne wejście do funkcji tłumaczenia */
+.cta {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  margin: 4px 0 20px;
+  background: var(--violet-050);
+  border: 1px solid var(--violet-200);
+  border-radius: var(--radius);
+}
+
+.cta h2 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+
+.cta p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.jobs-title {
+  margin: 28px 0 12px;
+  font-size: 16px;
+}
+
+.jobs {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.job {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.job-main {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* Nazwy plików bywają długie - bez tego rozpychają cały wiersz */
+.job-name {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.job-main .muted {
+  font-size: 13px;
+}
+
+.job-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 8px;
+}
+
+.job-actions .button {
+  padding: 7px 14px;
+  font-size: 13px;
+}
+
+/*
+ * Kolor statusu niesie tę samą informację co tekst obok, ale odczytuje się go szybciej.
+ * Sam kolor nigdy nie jest jedynym nośnikiem - etykieta jest zawsze, więc daltonista
+ * i czytnik ekranu dostają pełną treść.
+ */
+.badge-done {
+  color: var(--success);
+  background: var(--success-bg);
+  border-color: var(--success-border);
+}
+
+.badge-failed {
+  color: var(--danger);
+  background: var(--danger-bg);
+  border-color: var(--danger-border);
+}
+
+.badge-pending,
+.badge-processing {
+  color: var(--ink-soft);
+  background: var(--violet-050);
+  border-color: var(--violet-200);
+}
+
+/*
+ * .button ma width: 100%, bo w formularzach jest jedynym elementem w wierszu. Poza nimi -
+ * w nagłówku karty, w zachęcie na dashboardzie i przy wierszu zlecenia - ma się kurczyć
+ * do własnej treści, inaczej rozpycha układ i spycha tytuł do dwóch linii.
+ */
+.card-head .button,
+.cta .button,
+.job-actions .button {
+  width: auto;
+}

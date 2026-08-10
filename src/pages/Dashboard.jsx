@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/context';
 import Alert from '../components/Alert';
 
@@ -59,10 +59,18 @@ export default function Dashboard() {
         </div>
       </dl>
 
-      <Alert type="info">
-        Tłumaczenie plików jeszcze nie istnieje - to miejsce czeka na pierwszy przekrój
-        tej funkcji.
-      </Alert>
+      <div className="cta">
+        <div>
+          <h2>Tłumaczenie plików</h2>
+          <p className="muted">
+            Wgraj plik .txt, a przetłumaczoną wersję pobierzesz z listy zleceń. O gotowym
+            tłumaczeniu powiadomimy Cię też mailem.
+          </p>
+        </div>
+        <Link className="button" to="/translations">
+          Przejdź
+        </Link>
+      </div>
 
       {error && (
         <Alert type="error" traceId={error.traceId}>

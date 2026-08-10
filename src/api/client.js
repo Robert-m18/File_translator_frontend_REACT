@@ -81,9 +81,75 @@ export async function request(path, { method = 'GET', body, allowRefresh = true 
   return send(path, { method, body, allowRefresh, retried: false });
 }
 
+/**
+ * Wysyła plik jako multipart/form-data.
+ *
+ * Osobna funkcja, bo request() serializuje ciało do JSON-a, a plik JSON-em nie jest.
+ * Cała reszta mechaniki - token CSRF, ciasteczka, ciche odświeżenie tokenu, ProblemDetail -
+ * jest ta sama, więc idzie przez to samo send().
+ *
+ * @param {string} path
+ * @param {FormData} formData
+ */
+export async function upload(path, formData) {
+  return send(path, { method: 'POST', body: formData, allowRefresh: true, retried: false });
+}
+
+/**
+ * Pobiera plik i oddaje go razem z nazwą zaproponowaną przez serwer.
+ *
+ * DLACZEGO NIE ZWYKŁY <a href download>: przeglądarka IGNORUJE atrybut download przy
+ * odnośniku na inny origin (front stoi na :5173, API na :2009), więc plik otworzyłby się
+ * w karcie zamiast zapisać. Zwykła nawigacja omija też całą obsługę błędów - zamiast
+ * komunikatu użytkownik zobaczyłby surowy JSON na białej stronie.
+ *
+ * Nazwę czytamy z Content-Disposition. Serwer koduje ją zgodnie z RFC 5987
+ * (filename*=UTF-8''...), bo nazwy plików bywają z polskimi znakami.
+ */
+export async function downloadFile(path) {
+  let res;
+  try {
+    res = await fetch(`${API_BASE}${path}`, { credentials: 'include' });
+  } catch {
+    throw new ApiError('Brak połączenia z serwerem. Sprawdź, czy backend działa.', {
+      code: 'NETWORK_ERROR',
+    });
+  }
+
+  if (!res.ok) {
+    const problem = await parseBody(res);
+    throw new ApiError(problem?.detail || 'Nie udało się pobrać pliku', {
+      status: res.status,
+      code: problem?.code ?? null,
+      traceId: problem?.traceId ?? null,
+    });
+  }
+
+  return {
+    blob: await res.blob(),
+    filename: filenameFrom(res.headers.get('Content-Disposition')),
+  };
+}
+
+function filenameFrom(disposition) {
+  if (!disposition) return 'tlumaczenie.txt';
+
+  // Wariant RFC 5987 ma pierwszeństwo - tylko on niesie znaki spoza ASCII
+  const encoded = /filename\*=UTF-8''([^;]+)/i.exec(disposition);
+  if (encoded) return decodeURIComponent(encoded[1]);
+
+  const plain = /filename="?([^";]+)"?/i.exec(disposition);
+  return plain ? plain[1] : 'tlumaczenie.txt';
+}
+
 async function send(path, { method, body, allowRefresh, retried }) {
   const headers = {};
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+
+  // FormData NIE dostaje Content-Type: przeglądarka musi ustawić go sama, razem z granicą
+  // (boundary) części. Ustawienie go ręcznie psuje parsowanie po stronie serwera -
+  // żądanie dochodzi, ale pola są puste, co wygląda jak błąd walidacji.
+  const isMultipart = typeof FormData !== 'undefined' && body instanceof FormData;
+  if (body !== undefined && !isMultipart) headers['Content-Type'] = 'application/json';
 
   // Żądania zmieniające stan wymagają tokenu CSRF. GET-y nie - CsrfFilter po stronie
   // Springa przepuszcza GET/HEAD/OPTIONS/TRACE bez sprawdzania.
@@ -98,7 +164,7 @@ async function send(path, { method, body, allowRefresh, retried }) {
       method,
       headers,
       credentials: 'include',
-      body: body === undefined ? undefined : JSON.stringify(body),
+      body: body === undefined || isMultipart ? body : JSON.stringify(body),
     });
   } catch {
     // fetch rzuca tylko przy błędzie sieci - serwer nieuruchomiony, brak internetu, CORS
