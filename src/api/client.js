@@ -203,6 +203,13 @@ async function send(path, { method, body, allowRefresh, retried }) {
     }
   }
 
+  // Konto zablokowane przez administratora w TRAKCIE pracy. Bez tej gałęzi użytkownik
+  // zostaje na ekranie, który przy każdej akcji sypie błędami, i nie ma jak się domyślić,
+  // że ma iść na logowanie. Nie ma tu czego ponawiać - blokada nie mija sama.
+  if (res.status === 401 && code === 'ACCOUNT_BLOCKED') {
+    onSessionLost();
+  }
+
   throw new ApiError(problem?.detail || 'Wystąpił nieoczekiwany błąd', {
     status: res.status,
     code,

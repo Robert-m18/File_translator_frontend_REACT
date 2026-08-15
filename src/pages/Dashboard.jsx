@@ -72,6 +72,27 @@ export default function Dashboard() {
         </Link>
       </div>
 
+      {/*
+        Kafelek panelu widoczny wyłącznie dla administratora. Źródłem prawdy jest to samo
+        user.role co odznaka w nagłówku karty - jedno zapytanie /auth/me, jedna odpowiedź,
+        żadnej flagi trzymanej obok. Ukrycie kafelka jest wygodą, nie zabezpieczeniem:
+        endpointów pilnuje reguła hasRole("ADMIN") po stronie serwera.
+      */}
+      {user?.role === 'ADMIN' && (
+        <div className="cta">
+          <div>
+            <h2>Panel administracyjny</h2>
+            <p className="muted">
+              Przegląd kont, blokowanie i odblokowywanie, zdejmowanie blokady po nieudanych
+              logowaniach oraz wymuszone wylogowanie.
+            </p>
+          </div>
+          <Link className="button" to="/admin/users">
+            Otwórz
+          </Link>
+        </div>
+      )}
+
       {error && (
         <Alert type="error" traceId={error.traceId}>
           {error.message}

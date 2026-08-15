@@ -6,7 +6,8 @@ import Translations from './pages/Translations';
 import ConfirmEmail from './pages/ConfirmEmail';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import { RequireAuth, RequireAnonymous } from './auth/routes';
+import AdminUsers from './pages/AdminUsers';
+import { RequireAuth, RequireAnonymous, RequireAdmin } from './auth/routes';
 
 /*
  * Adresy /confirm-email, /reset-password i /forgot-password nie są dowolne - serwer skleja
@@ -55,6 +56,19 @@ export default function App() {
             <RequireAuth>
               <Translations />
             </RequireAuth>
+          }
+        />
+        {/*
+          Panel administracyjny. Adres w przeglądarce to /admin/users, ale API stoi pod
+          /users - reguła hasRole("ADMIN") w SecurityConfig obejmuje właśnie ten prefiks.
+          Te dwa adresy są od siebie niezależne i nie trzeba ich ujednolicać.
+        */}
+        <Route
+          path="/admin/users"
+          element={
+            <RequireAdmin>
+              <AdminUsers />
+            </RequireAdmin>
           }
         />
         <Route path="*" element={<Navigate to="/" replace />} />

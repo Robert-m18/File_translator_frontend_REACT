@@ -421,12 +421,24 @@ a:hover {
 
 .job {
   display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   align-items: center;
   padding: 14px 16px;
   background: var(--surface);
   border: 1px solid var(--border);
   border-radius: var(--radius);
+}
+
+/*
+ * Formularz rozwijany WEWNĄTRZ wiersza (powód blokady w panelu administracyjnym).
+ * flex-basis: 100% zrzuca go do własnej linii - bez tego wciskałby się obok przycisków
+ * i wiersz rozjeżdżałby się w poziomie. Stąd flex-wrap na .job wyżej; dla listy zleceń
+ * nic to nie zmienia, bo tam nie ma czego zawijać.
+ */
+.job-form {
+  flex-basis: 100%;
+  margin-top: 4px;
 }
 
 .job-main {
@@ -491,8 +503,21 @@ a:hover {
  */
 .card-head .button,
 .cta .button,
-.job-actions .button {
+.job-actions .button,
+.pager .button {
   width: auto;
+}
+
+/*
+ * Przewijanie stron listy kont. Bez .pager .button w regule wyżej oba przyciski
+ * dostałyby width: 100% i stanęłyby jeden pod drugim na całą szerokość karty.
+ */
+.pager {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 20px;
 }
 
 /*
