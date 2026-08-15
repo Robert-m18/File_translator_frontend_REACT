@@ -9,6 +9,8 @@ import {
   deleteTranslation,
   TARGET_LANGUAGES,
   PENDING_STATUSES,
+  SUPPORTED_FORMATS,
+  ACCEPTED_FILE_TYPES,
 } from '../api/translations';
 
 const STATUS_LABEL = {
@@ -129,7 +131,9 @@ export default function Translations() {
       <header className="card-head row">
         <div>
           <h1>Tłumaczenie plików</h1>
-          <p className="muted">Pliki .txt w UTF-8, do 256 KB</p>
+          <p className="muted">
+            {SUPPORTED_FORMATS.map((format) => `${format.extension} do ${format.maxLabel}`).join(', ')}
+          </p>
         </div>
         <Link className="button button-ghost" to="/dashboard">
           Wróć
@@ -145,13 +149,15 @@ export default function Translations() {
             id="file"
             className="input"
             type="file"
-            accept=".txt,text/plain"
+            accept={ACCEPTED_FILE_TYPES}
             ref={fileInput}
             onChange={(event) => setFile(event.target.files?.[0] ?? null)}
           />
           <p className="field-hint">
-            Plik zapisany w innym kodowaniu niż UTF-8 zostanie odrzucony - inaczej polskie
-            znaki trafiłyby do tłumaczenia jako krzaki.
+            O formacie decyduje ZAWARTOŚĆ pliku, nie jego nazwa - zmiana rozszerzenia niczego
+            nie zmienia. Plik tekstowy zapisany w innym kodowaniu niż UTF-8 zostanie odrzucony,
+            inaczej polskie znaki trafiłyby do tłumaczenia jako krzaki. PDF i arkusz wracają
+            w tym samym formacie, z zachowanym układem.
           </p>
         </div>
 
@@ -198,7 +204,15 @@ export default function Translations() {
               <div className="job-main">
                 <span className="job-name">{job.originalFilename}</span>
                 <span className="muted">
-                  {job.charCount} znaków → {job.targetLang.replace('_', '-')}
+                  {/*
+                    Dla dokumentów liczba znaków jest ZERO do chwili zakończenia i nie jest to
+                    błąd: liczby znaków w PDF-ie nie da się poznać bez otwarcia go, więc podaje
+                    ją dopiero dostawca razem z wynikiem. Pokazywanie "0 znaków" przy zleceniu
+                    w toku wyglądałoby na pusty plik.
+                  */}
+                  {job.charCount > 0 ? `${job.charCount} znaków` : 'liczba znaków po przetłumaczeniu'}
+                  {' → '}
+                  {job.targetLang.replace('_', '-')}
                 </span>
               </div>
 

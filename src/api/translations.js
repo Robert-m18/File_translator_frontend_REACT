@@ -56,3 +56,21 @@ export const TARGET_LANGUAGES = [
 
 /** Statusy, przy których warto odpytywać dalej. Reszta jest stanem końcowym. */
 export const PENDING_STATUSES = new Set(['PENDING', 'PROCESSING']);
+
+/**
+ * Obsługiwane formaty i ich limity - muszą zgadzać się z wyliczeniem FileType po stronie
+ * serwera, bo to on je egzekwuje. Tutaj są WYŁĄCZNIE po to, żeby powiedzieć użytkownikowi,
+ * czego się spodziewać, zanim wyśle plik; sprawdzenie w przeglądarce niczego nie zabezpiecza.
+ *
+ * Limity są RÓŻNE dla tekstu i dla dokumentów, i to nie jest niedoróbka: dla .txt bajty to
+ * praktycznie znaki, więc limit wynika z budżetu znaków u dostawcy; dla PDF-a i XLSX-a liczby
+ * znaków nie da się poznać przed wysłaniem, więc limit bajtowy ogranicza szkodę z jednego pliku.
+ */
+export const SUPPORTED_FORMATS = [
+  { extension: '.txt', label: 'tekst', maxLabel: '256 KB' },
+  { extension: '.pdf', label: 'PDF', maxLabel: '2 MB' },
+  { extension: '.xlsx', label: 'arkusz Excela', maxLabel: '2 MB' },
+];
+
+/** Wartość atrybutu accept dla pola wyboru pliku. */
+export const ACCEPTED_FILE_TYPES = '.txt,.pdf,.xlsx';
