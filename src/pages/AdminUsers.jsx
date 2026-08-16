@@ -13,6 +13,26 @@ import {
 
 const PAGE_SIZE = 20;
 
+/**
+ * Polska odmiana przez liczebnik: osobna forma dla 1, dla 2-4 i dla reszty.
+ *
+ * Wyjątek od "2-4" to NASTKI - 12, 13 i 14 idą do formy mnogiej ("kont", nie "konta"),
+ * i to samo dotyczy 112, 113, 114. Stąd warunek na resztach z dzielenia przez 10 ORAZ
+ * przez 100; sam mod 10 dawałby "13 konta".
+ *
+ * Odmieniać trzeba CAŁĄ frazę, nie sam rzeczownik: przymiotnik uzgadnia się z liczebnikiem
+ * tak samo ("1 konto pasujące", ale "5 kont pasujących"), więc doklejenie stałego
+ * "pasujących" do odmienionego rzeczownika daje zdanie niezgodne samo ze sobą.
+ */
+function plural(count, one, few, many) {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+
+  if (count === 1) return one;
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return few;
+  return many;
+}
+
 /** Czy konto odsiaduje automatyczną blokadę po nieudanych logowaniach. */
 function loginLocked(user) {
   return user.lockedUntil != null && new Date(user.lockedUntil) > new Date();
@@ -60,6 +80,16 @@ export default function AdminUsers() {
 
   const refresh = useCallback(async () => {
     setLoading(true);
+    /*
+     * Komunikat opisuje KONKRETNY wiersz ("Konto odblokowane."), więc nie może przeżyć
+     * zmiany tego, co jest na ekranie. Bez tego wisiał nad drugą stroną pagera i nad
+     * wynikami nowego wyszukiwania - czyli nad kontami, których nie dotyczy.
+     *
+     * Miejsce jest bezpieczne, bo refresh NIE JEST wołany po akcjach: te podmieniają
+     * pojedynczy wiersz przez replaceRow. Zależność useCallback to [query, page], więc
+     * czyścimy dokładnie wtedy, gdy zmienia się zestaw wierszy.
+     */
+    setNotice(null);
     try {
       const result = await listUsers({ q: query, page, size: PAGE_SIZE });
       setUsers(result.content ?? []);
@@ -122,8 +152,10 @@ export default function AdminUsers() {
         <div>
           <h1>Konta użytkowników</h1>
           <p className="muted">
-            {pageInfo.totalElements} {pageInfo.totalElements === 1 ? 'konto' : 'kont'}
-            {query && ` pasujących do „${query}”`}
+            {pageInfo.totalElements}{' '}
+            {plural(pageInfo.totalElements, 'konto', 'konta', 'kont')}
+            {query &&
+              ` ${plural(pageInfo.totalElements, 'pasujące', 'pasujące', 'pasujących')} do „${query}”`}
           </p>
         </div>
         <Link className="button button-ghost" to="/dashboard">
