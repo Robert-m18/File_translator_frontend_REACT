@@ -28,14 +28,20 @@ export function AuthProvider({ children }) {
 
     let cancelled = false;
 
-    meRequest({ allowRefresh: false })
+    // BEZ allowRefresh: false. Ciasteczko accessToken znika razem z ważnością tokenu
+    // (max-age = 15 min), więc "brak ciasteczka" to przy starcie DWIE różne sytuacje:
+    // gość i wracający użytkownik z żywym tokenem odświeżającym. Klient próbuje więc
+    // odnowić sesję, zanim uzna kogoś za anonimowego - inaczej każdy powrót po kwadransie
+    // kończył się ekranem logowania. Pełne uzasadnienie i cena: client.js.
+    meRequest()
       .then((data) => {
         if (cancelled) return;
         setUser(data);
         setStatus('authenticated');
       })
       .catch(() => {
-        // 401 przy starcie to normalna odpowiedź dla gościa, nie awaria
+        // Dotąd docieramy dopiero, gdy nie udało się TAKŻE odświeżenie - czyli gość
+        // albo sesja unieważniona po stronie serwera. To normalna odpowiedź, nie awaria.
         if (cancelled) return;
         setUser(null);
         setStatus('anonymous');

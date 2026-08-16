@@ -186,10 +186,35 @@ async function send(path, { method, body, allowRefresh, retried }) {
     return send(path, { method, body, allowRefresh, retried: true });
   }
 
-  // Token dostępowy żyje 15 minut. Jego wygaśnięcie to normalny stan przy dłuższej pracy,
-  // a nie błąd - wymieniamy go po cichu i wracamy do pierwotnego żądania. Użytkownik
-  // niczego nie zauważa. KAŻDY inny kod 401 oznacza ekran logowania.
-  if (res.status === 401 && code === 'EXPIRED_TOKEN' && allowRefresh && !retried) {
+  /*
+   * Token dostępowy żyje 15 minut. Jego wygaśnięcie to normalny stan przy dłuższej pracy,
+   * a nie błąd - wymieniamy go po cichu i wracamy do pierwotnego żądania.
+   *
+   * DWA KODY, NIE JEDEN - i to jest sedno. EXPIRED_TOKEN w PRZEGLĄDARCE nie występuje
+   * praktycznie nigdy: żeby serwer go zwrócił, żądanie musiałoby NIEŚĆ token po terminie,
+   * a ciasteczko accessToken ma max-age równe ważności tokenu, więc znika dokładnie w tej
+   * samej chwili, w której token przestaje być ważny. Żądanie leci wtedy BEZ ciasteczka
+   * i dostaje UNAUTHENTICATED - ten sam kod co gość, który nigdy się nie logował.
+   *
+   * Warunek tylko na EXPIRED_TOKEN nie mógł się więc spełnić i skutek był taki, że
+   * siedmiodniowy token odświeżający nie był używany NIGDY: po 15 minutach każda akcja
+   * cicho zwracała 401, a odświeżenie strony wyrzucało na ekran logowania. Objaw mylił,
+   * bo wyglądał na krótką ważność sesji, a nie na nieużywany mechanizm odnowienia.
+   * Znalezione 2026-08-16 przy ręcznym przeklikiwaniu panelu, gdy sesja padła w połowie.
+   *
+   * CENA, PRZYJĘTA ŚWIADOMIE: gość również dostaje UNAUTHENTICATED, więc jego wejście
+   * kosztuje teraz dwa dodatkowe żądania (GET /auth/csrf + POST /auth/refresh), zanim
+   * zobaczy ekran logowania. Odróżnić gościa od wygasłej sesji NIE DA SIĘ po stronie
+   * frontu - ciasteczka są httpOnly - a flaga w localStorage kłama w obie strony
+   * (uzasadnienie w AuthContext). Dwa żądania raz na wejście są tańsze niż sesja
+   * umierająca co kwadrans.
+   *
+   * Refresh idzie z allowRefresh: false, więc jego własne 401 (REFRESH_TOKEN_MISSING)
+   * nie zawraca tu ponownie.
+   */
+  const staleAccessToken = code === 'EXPIRED_TOKEN' || code === 'UNAUTHENTICATED';
+
+  if (res.status === 401 && staleAccessToken && allowRefresh && !retried) {
     try {
       await send('/auth/refresh', { method: 'POST', allowRefresh: false, retried: false });
       return send(path, { method, body, allowRefresh: false, retried: true });

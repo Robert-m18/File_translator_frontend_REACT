@@ -441,9 +441,25 @@ a:hover {
   margin-top: 4px;
 }
 
+/*
+ * PODSTAWA 240px, A NIE 0 - i to jest cały ten przepis.
+ *
+ * Przy flex: 1 (czyli flex-basis: 0) kolumna z adresem nigdy nie ma własnego rozmiaru,
+ * więc flex-wrap na .job NIE MA CZEGO ZAWINĄĆ: wiersz zawsze się mieści, bo .job-main
+ * kurczy się dowolnie daleko. Sąsiedzi mają flex-shrink: 0, więc cały deficyt spada na
+ * nią jedną. Widać to dopiero przy CZWARTYM przycisku (konto z blokadą logowania dostaje
+ * "Zdejmij blokadę logowania"): adres schodzi do "dem...", a opis łamie się po jednym
+ * słowie na linię. Wiersze obok, z trzema przyciskami, wyglądają normalnie - dlatego
+ * objaw wygląda na problem z tym jednym kontem, a nie z regułą układu.
+ *
+ * Z podstawą 240px zawijanie liczy się od realnego rozmiaru: gdy przyciski przestają się
+ * mieścić, .job-actions schodzi do własnej linii i wiersz ROŚNIE W PIONIE, zamiast
+ * zgniatać tożsamość konta. min-width: 0 zostaje, bo to ono pozwala .job-name skrócić
+ * długą nazwę wielokropkiem, gdy miejsca jest mniej niż 240px.
+ */
 .job-main {
   display: flex;
-  flex: 1;
+  flex: 1 1 240px;
   flex-direction: column;
   gap: 2px;
   min-width: 0;
