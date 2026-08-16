@@ -26,8 +26,13 @@ export function confirmEmailRequest(token) {
  * Kim jestem. Jedyny sposób, żeby po odświeżeniu strony sprawdzić, czy sesja żyje:
  * ciasteczka są httpOnly, więc JavaScript ich nie odczyta.
  *
- * allowRefresh: false przy starcie aplikacji - tu 401 to normalna odpowiedź dla gościa,
- * a nie sytuacja do ratowania odświeżaniem tokenu.
+ * allowRefresh domyślnie WŁĄCZONE, także przy starcie aplikacji - i to jest zmiana
+ * wobec pierwotnej wersji, która wołała to z allowRefresh: false "bo 401 przy starcie
+ * to normalna odpowiedź dla gościa". Odpowiedź gościa jest jednak NIE DO ODRÓŻNIENIA
+ * od odpowiedzi dla kogoś, komu wygasło ciasteczko accessToken (oba to 401
+ * UNAUTHENTICATED - patrz client.js), a to drugie zdarza się co 15 minut. Skutkiem
+ * było odsyłanie zalogowanego użytkownika na ekran logowania przy każdym F5 po kwadransie,
+ * mimo ważnego przez 7 dni tokenu odświeżającego.
  */
 export function meRequest({ allowRefresh = true } = {}) {
   return request('/auth/me', { allowRefresh });
