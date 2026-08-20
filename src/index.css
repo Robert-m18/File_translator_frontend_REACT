@@ -1,37 +1,72 @@
 /*
- * Motyw: jasny fiolet.
+ * Motyw: czerwono-szary.
  *
- * Kolory trzymane w zmiennych CSS, żeby odcień dało się zmienić w jednym miejscu,
- * a nie w piętnastu regułach. --violet-600 to kolor akcji (przyciski, linki, focus),
- * --violet-050..200 budują tło i obramowania.
+ * PODZIAŁ RÓL JEST TU CAŁĄ DECYZJĄ, a nie kwestią gustu: SZAROŚĆ NIESIE POWIERZCHNIE
+ * (tła, obramowania, tekst), CZERWIEŃ WYŁĄCZNIE AKCJE (przyciski, odnośniki, pierścień
+ * focusu, spinner). Poprzedni motyw fioletowy mógł tintować powierzchnie swoim kolorem
+ * bezkarnie, bo fiolet nie znaczył nic poza "to nasza marka".
+ *
+ * Czerwień znaczy. W tej aplikacji czerwony jest już kolorem BŁĘDU - komunikat o awarii,
+ * status "nie udało się", pole z błędem walidacji. Gdyby powierzchnie też były różowawe,
+ * blada karta i blady komunikat o błędzie zlałyby się w jedno i użytkownik przestałby
+ * odróżniać "tak wygląda ta aplikacja" od "coś poszło nie tak".
+ *
+ * Stąd reguła, którą trzeba utrzymać przy każdym nowym elemencie:
+ *
+ *   CZERWONE TŁO POWIERZCHNI  = coś poszło nie tak (--danger-bg i tylko ono)
+ *   CZERWONY WYPEŁNIONY BLOK  = działanie do kliknięcia (.button)
+ *   CZERWONY TEKST            = odnośnik albo błąd, rozróżniane przez kontekst
+ *   SZARE TŁO                 = zwykła powierzchnia, nie niesie żadnego znaczenia
+ *
+ * Dlatego .cta, .badge, .button-ghost i pola formularza są SZARE, mimo że we wcześniejszej
+ * wersji były tintowane kolorem marki. Jedyną różową powierzchnią w całej aplikacji
+ * zostaje komunikat o błędzie - i właśnie dzięki temu rzuca się w oczy.
+ *
+ * Statusy zleceń zostają zielono-czerwone, bo tam kolor niesie treść. "W kolejce"
+ * i "tłumaczę" są SZARE świadomie: czerwony badge przy zleceniu, które jest po prostu
+ * w toku, czytałoby się jak niepowodzenie.
  */
 
 :root {
-  --violet-050: #f7f4ff;
-  --violet-100: #ede7ff;
-  --violet-200: #ddd2fb;
-  --violet-300: #c4b1f6;
-  --violet-400: #a586ee;
-  --violet-500: #8b5fe6;
-  --violet-600: #7745d8;
-  --violet-700: #6134b4;
+  /* Czerwień marki. Kontrast sprawdzony: biały tekst na 500 to 5.0:1, na 600 6.4:1,
+     a 700 na białym 8.8:1 - czyli AA także dla zwykłego, nieprzeskalowanego tekstu. */
+  --brand-050: #fdf3f3;
+  --brand-100: #fbe3e3;
+  --brand-200: #f5c9c9;
+  --brand-300: #eba3a3;
+  --brand-400: #dd6a6a;
+  --brand-500: #cf3333;
+  --brand-600: #b52626;
+  --brand-700: #911c1c;
 
-  --ink: #2b2440;
-  --ink-soft: #6b6285;
+  /* Szarości lekko ocieplone - czysto niebieskawy szary obok czerwieni wygląda brudno. */
+  --grey-050: #faf9f9;
+  --grey-100: #f3f1f1;
+  --grey-200: #e6e3e3;
+  --grey-300: #d3cfcf;
+
+  --ink: #1f1d1d;
+  --ink-soft: #5f5b5b;
   --surface: #ffffff;
-  --border: #e7e0f7;
+  --border: #e3e0e0;
 
-  --danger: #b42318;
-  --danger-bg: #fdf3f2;
-  --danger-border: #f5c9c4;
+  /* Czerwień BŁĘDU jest ciemniejsza i chłodniejsza od czerwieni marki - nie po to,
+     żeby dało się je rozróżnić z pamięci (nie da się), tylko żeby tekst błędu na różowym
+     tle miał wyraźnie wyższy kontrast niż odnośnik. Odróżnia je jednak przede wszystkim
+     KSZTAŁT: błąd to blok z tłem, akcja to wypełniony przycisk albo tekst w zdaniu. */
+  --danger: #9b1c14;
+  --danger-bg: #fdf1f0;
+  --danger-border: #f3c4bf;
   --success: #17734b;
   --success-bg: #f0faf5;
   --success-border: #b8e5cd;
-  --info-bg: var(--violet-050);
-  --info-border: var(--violet-200);
+  /* Informacja jest NEUTRALNA - szara, nie w kolorze marki. Tintowana na czerwono
+     wyglądałaby jak ostrzeżenie, którym nie jest. */
+  --info-bg: var(--grey-100);
+  --info-border: var(--grey-200);
 
   --radius: 14px;
-  --shadow: 0 18px 40px -18px rgba(88, 52, 168, 0.35);
+  --shadow: 0 18px 40px -18px rgba(70, 45, 45, 0.3);
 
   color-scheme: light;
 }
@@ -49,12 +84,14 @@ body {
 body {
   font-family: 'Segoe UI', system-ui, -apple-system, Arial, sans-serif;
   color: var(--ink);
-  /* Delikatny gradient zamiast płaskiego szarego tła - stąd bierze się "jasnofioletowy"
-     charakter całości, bez malowania każdego elementu na fiolet. */
+  /* Ledwie widoczna czerwonawa poświata w dwóch rogach zamiast płaskiej szarości - stąd
+     bierze się ciepły charakter całości, bez tintowania pojedynczych elementów. Wartości
+     wpisane wprost, a nie przez zmienne: to nie są kolory marki, tylko dwa punkty gradientu
+     dobrane pod ten konkretny układ, a użycie tu --brand-100 dałoby wyraźnie różową plamę. */
   background:
-    radial-gradient(1100px 620px at 12% -12%, var(--violet-100), transparent 62%),
-    radial-gradient(900px 520px at 92% 8%, #f3e9ff, transparent 58%),
-    var(--violet-050);
+    radial-gradient(1100px 620px at 12% -12%, #f7eded, transparent 62%),
+    radial-gradient(900px 520px at 92% 8%, #efeaea, transparent 58%),
+    var(--grey-050);
   background-attachment: fixed;
   min-height: 100vh;
   display: flex;
@@ -135,13 +172,13 @@ body {
 }
 
 a {
-  color: var(--violet-600);
+  color: var(--brand-700);
   font-weight: 600;
   text-decoration: none;
 }
 
 a:hover {
-  color: var(--violet-700);
+  color: var(--brand-700);
   text-decoration: underline;
 }
 
@@ -171,23 +208,53 @@ a:hover {
   font-size: 15px;
   font-family: inherit;
   color: var(--ink);
-  background: var(--violet-050);
+  background: var(--grey-050);
   border: 1px solid var(--border);
   border-radius: 10px;
   transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
 }
 
 .input:hover {
-  border-color: var(--violet-300);
+  border-color: var(--grey-300);
 }
 
 .input:focus {
   outline: none;
   background: var(--surface);
-  border-color: var(--violet-500);
+  border-color: var(--brand-500);
   /* Widoczny pierścień focusu to wymóg dostępności, nie ozdoba - bez niego osoba
      poruszająca się po formularzu tabem nie wie, gdzie jest. */
-  box-shadow: 0 0 0 3px rgba(139, 95, 230, 0.22);
+  box-shadow: 0 0 0 3px rgba(207, 51, 51, 0.20);
+}
+
+/*
+ * Pola autouzupełnione przez przeglądarkę.
+ *
+ * Chrome maluje je WŁASNYM błękitem i background-color tego NIE nadpisze - przeglądarka
+ * wymusza swoją wartość ponad arkuszem strony. Jedyne, co działa, to zalanie pola cieniem
+ * wewnętrznym większym niż ono samo; stąd ta pozornie absurdalna wartość 1000px.
+ *
+ * Bez tego motyw rozjeżdża się dokładnie tam, gdzie użytkownik patrzy najpierw: ekran
+ * logowania z zapamiętanym hasłem miał dwa niebieskie prostokąty pośrodku czerwono-szarej
+ * karty. Nie widać tego przy pierwszym uruchomieniu ani w trybie incognito - dopiero
+ * u kogoś, kto raz się zalogował.
+ *
+ * Wariant :focus musi POWTÓRZYĆ pierścień focusu, bo box-shadow nie sumuje się między
+ * regułami - podanie samego wypełnienia skasowałoby obramowanie, czyli zabrało osobie
+ * poruszającej się tabem jedyną informację o tym, gdzie jest.
+ */
+.input:-webkit-autofill,
+.input:-webkit-autofill:hover {
+  -webkit-box-shadow: inset 0 0 0 1000px var(--grey-050);
+  -webkit-text-fill-color: var(--ink);
+  caret-color: var(--ink);
+}
+
+.input:-webkit-autofill:focus {
+  -webkit-box-shadow:
+    inset 0 0 0 1000px var(--surface),
+    0 0 0 3px rgba(207, 51, 51, 0.2);
+  -webkit-text-fill-color: var(--ink);
 }
 
 .field-error {
@@ -212,13 +279,13 @@ a:hover {
   font-weight: 650;
   font-family: inherit;
   color: #fff;
-  background: linear-gradient(180deg, var(--violet-500), var(--violet-600));
+  background: linear-gradient(180deg, var(--brand-500), var(--brand-600));
   border: none;
   border-radius: 10px;
   cursor: pointer;
   text-decoration: none;
   transition: filter 0.15s, box-shadow 0.15s, transform 0.05s;
-  box-shadow: 0 8px 18px -8px rgba(119, 69, 216, 0.7);
+  box-shadow: 0 8px 18px -8px rgba(181, 38, 38, 0.5);
 }
 
 .button:hover:not(:disabled) {
@@ -233,7 +300,7 @@ a:hover {
 
 .button:focus-visible {
   outline: none;
-  box-shadow: 0 0 0 3px rgba(139, 95, 230, 0.35);
+  box-shadow: 0 0 0 3px rgba(207, 51, 51, 0.32);
 }
 
 .button:disabled {
@@ -243,14 +310,76 @@ a:hover {
 }
 
 .button-ghost {
-  color: var(--violet-700);
-  background: var(--violet-100);
+  color: var(--brand-700);
+  background: var(--grey-100);
   box-shadow: none;
 }
 
 .button-ghost:hover:not(:disabled) {
-  color: var(--violet-700);
-  background: var(--violet-200);
+  color: var(--brand-700);
+  background: var(--grey-200);
+}
+
+/*
+ * Przycisk logowania przez Google.
+ *
+ * Biały z szarą obwódką, a nie czerwony jak reszta — celowo. Wytyczne Google dopuszczają
+ * dla przycisku z ich znakiem biały albo neutralny podkład, a znak ma zostać czterokolorowy;
+ * położenie go na naszej czerwieni łamie i jedno, i drugie — a przy TEJ palecie doszedł
+ * drugi powód: czterokolorowy znak Google niesie własną czerwień, która na naszej czerwieni
+ * po prostu ginie. Praktyczny zysk jest ten sam:
+ * przycisk logowania hasłem zostaje jedynym wyróżnionym elementem, więc dwa równorzędne
+ * "wołania do działania" nie konkurują ze sobą wzrokowo.
+ *
+ * gap: 10px zamiast marginesu na znaku — inaczej odstęp znika przy zawinięciu napisu.
+ */
+.button-google {
+  gap: 10px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.button-google:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--grey-050);
+  border-color: var(--grey-200);
+}
+
+.button-google:focus-visible {
+  box-shadow: 0 0 0 3px rgba(207, 51, 51, 0.32);
+}
+
+/* Znak firmowy — stały rozmiar, żeby nie skalował się z długością napisu. */
+.google-mark {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+/*
+ * Rozdzielacz "albo" między formularzem a logowaniem przez Google.
+ *
+ * Kreski rysują pseudoelementy, więc w drzewie dostępności zostaje samo słowo — obrazek
+ * z linii nie ma czego przeczytać czytnikowi ekranu, a dwa <hr> wokół tekstu ogłaszałyby
+ * dwie zmiany sekcji tam, gdzie żadnej nie ma.
+ */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
 }
 
 /* ---------- komunikaty ---------- */
@@ -276,7 +405,7 @@ a:hover {
 }
 
 .alert-info {
-  color: var(--violet-700);
+  color: var(--brand-700);
   background: var(--info-bg);
   border-color: var(--info-border);
 }
@@ -300,9 +429,9 @@ a:hover {
   padding: 5px 11px;
   font-size: 12px;
   font-weight: 650;
-  color: var(--violet-700);
-  background: var(--violet-100);
-  border: 1px solid var(--violet-200);
+  color: var(--brand-700);
+  background: var(--grey-100);
+  border: 1px solid var(--grey-200);
   border-radius: 999px;
 }
 
@@ -315,7 +444,7 @@ a:hover {
 
 .details > div {
   padding: 12px 14px;
-  background: var(--violet-050);
+  background: var(--grey-050);
   border: 1px solid var(--border);
   border-radius: 10px;
 }
@@ -349,8 +478,8 @@ a:hover {
 .spinner {
   width: 20px;
   height: 20px;
-  border: 2.5px solid var(--violet-200);
-  border-top-color: var(--violet-600);
+  border: 2.5px solid var(--grey-200);
+  border-top-color: var(--brand-700);
   border-radius: 50%;
   animation: spin 0.7s linear infinite;
 }
@@ -390,8 +519,8 @@ a:hover {
   justify-content: space-between;
   padding: 18px 20px;
   margin: 4px 0 20px;
-  background: var(--violet-050);
-  border: 1px solid var(--violet-200);
+  background: var(--grey-050);
+  border: 1px solid var(--grey-200);
   border-radius: var(--radius);
 }
 
@@ -508,8 +637,8 @@ a:hover {
 .badge-pending,
 .badge-processing {
   color: var(--ink-soft);
-  background: var(--violet-050);
-  border-color: var(--violet-200);
+  background: var(--grey-050);
+  border-color: var(--grey-200);
 }
 
 /*
@@ -540,7 +669,7 @@ a:hover {
  * Pole wyboru pliku.
  *
  * Przeglądarka rysuje tu WŁASNY przycisk systemowy, który nie dziedziczy niczego
- * z .input - stąd szary prostokąt w środku fioletowego pola. Jedyny sposób, żeby go
+ * z .input - stąd surowy prostokąt w środku naszego pola. Jedyny sposób, żeby go
  * ostylować, to pseudoelement ::file-selector-button; nie da się go zastąpić własnym
  * przyciskiem bez ukrycia całego pola i sterowania nim z JavaScriptu, co psuje obsługę
  * klawiaturą i czytnikami ekranu.
@@ -565,9 +694,9 @@ a:hover {
   font-size: 14px;
   font-weight: 650;
   font-family: inherit;
-  color: var(--violet-700);
-  background: var(--violet-100);
-  border: 1px solid var(--violet-200);
+  color: var(--brand-700);
+  background: var(--grey-100);
+  border: 1px solid var(--grey-200);
   border-radius: 8px;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
@@ -575,6 +704,6 @@ a:hover {
 
 .input[type='file']:hover::file-selector-button,
 .input[type='file']:hover::-webkit-file-upload-button {
-  background: var(--violet-200);
-  border-color: var(--violet-300);
+  background: var(--grey-200);
+  border-color: var(--grey-300);
 }

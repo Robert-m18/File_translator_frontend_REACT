@@ -63,14 +63,27 @@ export const PENDING_STATUSES = new Set(['PENDING', 'PROCESSING']);
  * czego się spodziewać, zanim wyśle plik; sprawdzenie w przeglądarce niczego nie zabezpiecza.
  *
  * Limity są RÓŻNE dla tekstu i dla dokumentów, i to nie jest niedoróbka: dla .txt bajty to
- * praktycznie znaki, więc limit wynika z budżetu znaków u dostawcy; dla PDF-a i XLSX-a liczby
+ * praktycznie znaki, więc limit wynika z budżetu znaków u dostawcy; dla dokumentów liczby
  * znaków nie da się poznać przed wysłaniem, więc limit bajtowy ogranicza szkodę z jednego pliku.
+ *
+ * Kolejność jak w wyliczeniu FileType po stronie serwera - dwie listy tego samego zbioru
+ * czyta się porównując, a nie szukając.
  */
 export const SUPPORTED_FORMATS = [
   { extension: '.txt', label: 'tekst', maxLabel: '256 KB' },
   { extension: '.pdf', label: 'PDF', maxLabel: '2 MB' },
+  { extension: '.docx', label: 'dokument Worda', maxLabel: '2 MB' },
   { extension: '.xlsx', label: 'arkusz Excela', maxLabel: '2 MB' },
 ];
 
-/** Wartość atrybutu accept dla pola wyboru pliku. */
-export const ACCEPTED_FILE_TYPES = '.txt,.pdf,.xlsx';
+/**
+ * Wartość atrybutu accept dla pola wyboru pliku.
+ *
+ * WYPROWADZANA z listy powyżej, a nie zapisana drugi raz z ręki. Wcześniej był tu osobny
+ * łańcuch '.txt,.pdf,.xlsx' - czyli dwa źródła prawdy o tym samym zbiorze, które przy
+ * dokładaniu formatu rozjeżdżają się w sposób wyjątkowo trudny do zauważenia: podpowiedź
+ * pod polem wymienia format, a okno wyboru pliku go ODFILTROWUJE, więc użytkownik widzi
+ * "obsługujemy .docx" i nie może takiego pliku wskazać. Żaden błąd nigdzie nie pada,
+ * bo żądanie w ogóle nie powstaje.
+ */
+export const ACCEPTED_FILE_TYPES = SUPPORTED_FORMATS.map((format) => format.extension).join(',');

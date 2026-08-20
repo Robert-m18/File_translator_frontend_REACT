@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../auth/context';
+import { googleErrorMessage } from '../auth/google';
 import { validateEmail } from '../utils/validation';
 import Alert from '../components/Alert';
+import GoogleButton from '../components/GoogleButton';
 
 export default function Login() {
   /*
@@ -14,6 +16,22 @@ export default function Login() {
    */
   const [searchParams] = useSearchParams();
   const justConfirmed = searchParams.get('confirmed') === '1';
+
+  /*
+   * ?error=KOD ustawia BACKEND, przekierowując tu po nieudanym logowaniu przez Google.
+   * Nośnikiem jest adres z tego samego powodu co wyżej, plus jednego dodatkowego:
+   * przeglądarka wraca tu z accounts.google.com zwykłą NAWIGACJĄ, więc nie ma żadnego
+   * wywołania fetch, którego wynik dałoby się złapać w kodzie - a stan routera nie
+   * przetrwałby przejścia przez obcą domenę.
+   *
+   * Ekran logowania jest tu adresem powrotnym dla porażki, bo /login jako trasa NIE
+   * ISTNIEJE - logowanie stoi pod "/". Wskazanie nieistniejącej ścieżki wpadłoby
+   * w <Route path="*">, a tamtejsze przekierowanie NIE PRZENOSI query stringa, więc kod
+   * błędu przepadłby po drodze i użytkownik dostałby czysty ekran logowania bez słowa
+   * wyjaśnienia. Ta zależność jest obustronna: zmiana trasy logowania wymaga zmiany
+   * app.oauth2.failure-path po stronie serwera.
+   */
+  const googleError = googleErrorMessage(searchParams.get('error'));
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -64,6 +82,13 @@ export default function Login() {
         </Alert>
       )}
 
+      {/*
+        Odmowa z Google idzie NAD formularzem, a nie pod nim jak serverError: użytkownik
+        wraca tu z obcej domeny i musi zobaczyć powód od razu, zanim zacznie szukać
+        winy we własnym haśle.
+      */}
+      {googleError && <Alert type="error">{googleError}</Alert>}
+
       <form className="form" onSubmit={handleSubmit} noValidate>
         <label className="field">
           <span className="label">Email</span>
@@ -99,6 +124,10 @@ export default function Login() {
           {serverError.message}
         </Alert>
       )}
+
+      <div className="divider">albo</div>
+
+      <GoogleButton label="Zaloguj się przez Google" />
 
       <footer className="card-foot">
         <Link to="/forgot-password">Nie pamiętam hasła</Link>
