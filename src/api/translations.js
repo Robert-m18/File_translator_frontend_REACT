@@ -51,6 +51,7 @@ export const TARGET_LANGUAGES = [
   { value: 'FR', label: 'francuski' },
   { value: 'ES', label: 'hiszpański' },
   { value: 'IT', label: 'włoski' },
+  { value: 'DA', label: 'duński' },
   { value: 'PL', label: 'polski' },
 ];
 
