@@ -154,9 +154,11 @@ export default function Translations() {
             onChange={(event) => setFile(event.target.files?.[0] ?? null)}
           />
           <p className="field-hint">
-            O formacie decyduje ZAWARTOŚĆ pliku, nie jego nazwa - zmiana rozszerzenia niczego
-            nie zmienia. Plik tekstowy zapisany w innym kodowaniu niż UTF-8 zostanie odrzucony,
-            inaczej polskie znaki trafiłyby do tłumaczenia jako krzaki. PDF i arkusz wracają
+            O formacie decyduje ZAWARTOŚĆ pliku, nie jego nazwa - z jednym wyjątkiem: dokument
+            Worda i arkusz Excela są w środku tym samym rodzajem archiwum, więc rozróżnia je
+            dopiero rozszerzenie. Arkusz nazwany .docx zostanie odrzucony przez tłumacza.
+            Plik tekstowy zapisany w innym kodowaniu niż UTF-8 zostanie odrzucony, inaczej
+            polskie znaki trafiłyby do tłumaczenia jako krzaki. PDF, dokument i arkusz wracają
             w tym samym formacie, z zachowanym układem.
           </p>
         </div>
