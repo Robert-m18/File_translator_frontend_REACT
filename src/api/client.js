@@ -54,9 +54,65 @@ export class ApiError extends Error {
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
+/**
+ * Komunikat na wypadek, gdy z serwerem nie da się porozmawiać.
+ *
+ * JEDNA funkcja zamiast powtórzonego łańcucha w każdym miejscu wołającym fetch - inaczej
+ * kopie rozjeżdżają się przy pierwszej zmianie tekstu i użytkownik dostaje inny komunikat
+ * przy logowaniu, a inny przy pobieraniu pliku.
+ *
+ * Treść jest dla UŻYTKOWNIKA, nie dla programisty. Poprzednia wersja mówiła "Sprawdź, czy
+ * backend działa" - zdanie sensowne wyłącznie dla kogoś, kto ma ten backend na własnym
+ * dysku. Osoba korzystająca z aplikacji nie ma czego sprawdzić ani jak, więc jedyne, co
+ * może zrobić, to spróbować później - i to właśnie mówimy.
+ *
+ * ŚWIADOME UPROSZCZENIE: fetch rzuca tym samym wyjątkiem przy wyłączonym serwerze, przy
+ * zerwanym łączu użytkownika i przy odbiciu CORS - z przeglądarki NIE DA SIĘ tych
+ * przypadków rozróżnić (to celowe ograniczenie, żeby strona nie mogła skanować sieci).
+ * Wskazujemy więc na siebie, mimo że wina bywa po drugiej stronie: przy naszej awarii to
+ * prawda, a przy cudzej - użytkownik i tak nie ma czego naprawić w aplikacji, a zdanie
+ * "sprawdź swoje połączenie" przy DZIAŁAJĄCYM internecie jest gorsze niż nieprecyzyjne
+ * przeprosiny, bo wysyła w bezowocną pogoń.
+ */
+function serverUnreachable(traceId = null) {
+  return new ApiError(
+    'Błąd serwera - to problem po naszej stronie. Spróbuj ponownie za parę minut.',
+    { code: 'NETWORK_ERROR', traceId },
+  );
+}
+
+/**
+ * Awaria serwera, która JEST odpowiedzią HTTP (500, 502, 503, 504).
+ *
+ * Osobno od powyższej, bo tutaj serwer odpowiedział - tyle że albo bez ciała, albo ciałem,
+ * którego nie da się odczytać (stronę błędu potrafi podstawić proxy przed aplikacją,
+ * i będzie to HTML, nie ProblemDetail). Gdy ciało JEST poprawnym ProblemDetail, wygrywa
+ * jego "detail": nasz backend pisze tam zdanie po polsku, konkretniejsze niż cokolwiek,
+ * co dałoby się napisać tutaj na zapas.
+ *
+ * traceId przekazujemy dalej, jeśli przyszedł - to jedyna rzecz, po której da się odnaleźć
+ * to żądanie w logach serwera, więc nie wolno jej zgubić właśnie przy awarii.
+ */
+function serverFault(status, traceId) {
+  return new ApiError(
+    'Błąd serwera - to problem po naszej stronie. Spróbuj ponownie za parę minut.',
+    { status, code: 'SERVER_ERROR', traceId },
+  );
+}
+
 async function parseBody(res) {
   if (res.status === 204) return null;
-  const text = await res.text();
+
+  // res.text() też potrafi rzucić - gdy połączenie padnie w trakcie czytania ciała.
+  // Traktujemy to jak brak ciała, bo wołający i tak ma już status odpowiedzi i poradzi
+  // sobie bez treści; nieosłonięte dałoby surowy wyjątek przeglądarki na ekranie.
+  let text;
+  try {
+    text = await res.text();
+  } catch {
+    return null;
+  }
+
   if (!text) return null;
   try {
     return JSON.parse(text);
@@ -65,13 +121,39 @@ async function parseBody(res) {
   }
 }
 
-/** Pobiera świeży token CSRF. Odpowiedź niesie też nazwę nagłówka, w którym go odesłać. */
+/**
+ * Pobiera świeży token CSRF. Odpowiedź niesie też nazwę nagłówka, w którym go odesłać.
+ *
+ * TO BYŁ JEDYNY fetch W TYM PLIKU BEZ try/catch - i właśnie tędy przeciekało na ekran
+ * surowe "Failed to fetch" z przeglądarki. Ta funkcja jest wołana z send() PRZED każdym
+ * żądaniem zmieniającym stan, czyli wcześniej niż osłonięty fetch poniżej: przy
+ * niedziałającym serwerze wyjątek leciał stąd i nigdy nie docierał do tamtej obsługi.
+ * Objaw był mylący podwójnie - komunikat po angielsku, w aplikacji pisanej po polsku,
+ * i pojawiający się WYŁĄCZNIE po kliknięciu przycisku (logowanie, rejestracja, wysłanie
+ * pliku), podczas gdy samo wejście na stronę - czyli GET /auth/me - pokazywało komunikat
+ * poprawny. Wyglądało to na błąd konkretnego formularza, a nie na brak serwera.
+ */
 async function loadCsrf() {
-  const res = await fetch(`${API_BASE}/auth/csrf`, { credentials: 'include' });
-  if (!res.ok) {
-    throw new ApiError('Nie udało się nawiązać połączenia z serwerem', { status: res.status });
+  let res;
+  try {
+    res = await fetch(`${API_BASE}/auth/csrf`, { credentials: 'include' });
+  } catch {
+    throw serverUnreachable();
   }
-  csrf = await res.json();
+
+  if (!res.ok) {
+    // Serwer odpowiedział, ale nie tokenem. Cokolwiek to jest, dalej nie ruszymy -
+    // bez tokenu każde żądanie zmieniające stan odbije się o CSRF.
+    throw serverFault(res.status, null);
+  }
+
+  try {
+    csrf = await res.json();
+  } catch {
+    // 200 z ciałem, które nie jest JSON-em, to prawie na pewno strona podstawiona przez
+    // proxy albo portal przechwytujący ruch. Dla nas nieodróżnialne od awarii serwera.
+    throw serverFault(res.status, null);
+  }
   return csrf;
 }
 
@@ -116,13 +198,17 @@ export async function downloadFile(path) {
   try {
     res = await fetch(`${API_BASE}${path}`, { credentials: 'include' });
   } catch {
-    throw new ApiError('Brak połączenia z serwerem. Sprawdź, czy backend działa.', {
-      code: 'NETWORK_ERROR',
-    });
+    throw serverUnreachable();
   }
 
   if (!res.ok) {
     const problem = await parseBody(res);
+    // Ta sama zasada co w send(): awaria serwera dostaje komunikat mówiący, że to nie
+    // użytkownik zawinił i że warto spróbować później. "Nie udało się pobrać pliku"
+    // zostaje dla odpowiedzi, które NIE są awarią - np. 410 CONTENT_EXPIRED.
+    if (res.status >= 500 && !problem?.detail) {
+      throw serverFault(res.status, problem?.traceId ?? null);
+    }
     throw new ApiError(problem?.detail || 'Nie udało się pobrać pliku', {
       status: res.status,
       code: problem?.code ?? null,
@@ -173,9 +259,7 @@ async function send(path, { method, body, allowRefresh, retried }) {
     });
   } catch {
     // fetch rzuca tylko przy błędzie sieci - serwer nieuruchomiony, brak internetu, CORS
-    throw new ApiError('Brak połączenia z serwerem. Sprawdź, czy backend działa.', {
-      code: 'NETWORK_ERROR',
-    });
+    throw serverUnreachable();
   }
 
   if (res.ok) return parseBody(res);
@@ -238,6 +322,20 @@ async function send(path, { method, body, allowRefresh, retried }) {
   // że ma iść na logowanie. Nie ma tu czego ponawiać - blokada nie mija sama.
   if (res.status === 401 && code === 'ACCOUNT_BLOCKED') {
     onSessionLost();
+  }
+
+  /*
+   * Awaria po stronie serwera. Bez tej gałęzi 502 albo 503 od proxy - odpowiedzi, które
+   * nie niosą ProblemDetail, bo aplikacja w ogóle ich nie wygenerowała - wpadały na
+   * "Wystąpił nieoczekiwany błąd": zdanie prawdziwe, ale nieodróżnialne od naszego błędu
+   * walidacji i nieniosące jedynej użytecznej informacji, czyli "spróbuj później".
+   *
+   * "problem?.detail ||", a nie sam warunek na status: gdy nasz backend odpowie 500
+   * porządnym ProblemDetail, jego "detail" jest konkretniejszy niż cokolwiek napisanego
+   * tutaj na zapas, więc ma pierwszeństwo.
+   */
+  if (res.status >= 500 && !problem?.detail) {
+    throw serverFault(res.status, problem?.traceId ?? null);
   }
 
   throw new ApiError(problem?.detail || 'Wystąpił nieoczekiwany błąd', {
