@@ -20,7 +20,12 @@
  *    i może się zmienić w każdej chwili.
  */
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:2009';
+/**
+ * Eksportowane, bo logowanie przez Google NIE idzie przez fetch, tylko przez zwykłą
+ * nawigację przeglądarki (patrz auth/google.js) - a adres trzeba złożyć z tej samej
+ * podstawy co reszta wywołań, żeby nie istniały dwa źródła prawdy o tym, gdzie stoi API.
+ */
+export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:2009';
 
 /** Token CSRF w pamięci modułu. Ginie przy odświeżeniu strony - i dobrze. */
 let csrf = null;

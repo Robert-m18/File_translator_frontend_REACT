@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { registerRequest } from '../api/auth';
 import { validateEmail, passwordError, nameError, PASSWORD_HINT } from '../utils/validation';
 import Alert from '../components/Alert';
+import GoogleButton from '../components/GoogleButton';
 
 export default function Register() {
   const [done, setDone] = useState(false);
@@ -124,6 +125,18 @@ export default function Register() {
           {serverError.message}
         </Alert>
       )}
+
+      <div className="divider">albo</div>
+
+      {/*
+        Ten sam przycisk i ten sam adres co na logowaniu - różni się wyłącznie napisem.
+        Dla Google rejestracja i logowanie to jedna operacja: konto po naszej stronie
+        powstaje przy pierwszym udanym logowaniu, a jeśli adres ma już konto założone
+        hasłem, oba zostają połączone. Konto z Google jest od razu aktywne i NIE dostaje
+        maila potwierdzającego - adres potwierdziło już Google - więc ten przycisk
+        celowo omija cały ekran "sprawdź skrzynkę" powyżej.
+      */}
+      <GoogleButton label="Zarejestruj się przez Google" />
 
       <footer className="card-foot">
         <span>

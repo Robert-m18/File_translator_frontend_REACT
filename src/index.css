@@ -253,6 +253,66 @@ a:hover {
   background: var(--violet-200);
 }
 
+/*
+ * Przycisk logowania przez Google.
+ *
+ * Biały z szarą obwódką, a nie fioletowy jak reszta — celowo. Wytyczne Google dopuszczają
+ * dla przycisku z ich znakiem biały albo neutralny podkład, a znak ma zostać czterokolorowy;
+ * położenie go na naszym fiolecie łamie i jedno, i drugie. Praktyczny zysk jest ten sam:
+ * przycisk logowania hasłem zostaje jedynym wyróżnionym elementem, więc dwa równorzędne
+ * "wołania do działania" nie konkurują ze sobą wzrokowo.
+ *
+ * gap: 10px zamiast marginesu na znaku — inaczej odstęp znika przy zawinięciu napisu.
+ */
+.button-google {
+  gap: 10px;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: none;
+}
+
+.button-google:hover:not(:disabled) {
+  color: var(--ink);
+  background: var(--violet-050);
+  border-color: var(--violet-200);
+}
+
+.button-google:focus-visible {
+  box-shadow: 0 0 0 3px rgba(139, 95, 230, 0.35);
+}
+
+/* Znak firmowy — stały rozmiar, żeby nie skalował się z długością napisu. */
+.google-mark {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+/*
+ * Rozdzielacz "albo" między formularzem a logowaniem przez Google.
+ *
+ * Kreski rysują pseudoelementy, więc w drzewie dostępności zostaje samo słowo — obrazek
+ * z linii nie ma czego przeczytać czytnikowi ekranu, a dwa <hr> wokół tekstu ogłaszałyby
+ * dwie zmiany sekcji tam, gdzie żadnej nie ma.
+ */
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
 /* ---------- komunikaty ---------- */
 
 .alert {
