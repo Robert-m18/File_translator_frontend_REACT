@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import Alert from '../components/Alert';
 import Spinner from '../components/Spinner';
@@ -94,7 +94,24 @@ export default function AdminUsers() {
    */
   const [deletingId, setDeletingId] = useState(null);
 
+  /*
+   * Numer ostatniego rozpoczętego odczytu listy. Wygrywa odczyt rozpoczęty najpóźniej, a nie
+   * ten, który najszybciej wrócił.
+   *
+   * Odczyt zależy od filtra i numeru strony, więc szybsza zmiana któregokolwiek zostawia dwie
+   * odpowiedzi w locie. Gdy wcześniejsza wróci później, wpisuje na ekran wyniki poprzedniego
+   * zapytania, podczas gdy pole wyszukiwania i pager pokazują już nowe - lista przestaje wtedy
+   * odpowiadać własnym kontrolkom. Stan naprawia się przy następnej akcji, więc wygląda na
+   * chwilowe zacięcie, a nie na wyścig odpowiedzi.
+   *
+   * Ten sam cel co flaga przerwania w kontekście sesji: odrzucić wynik, który przestał być
+   * aktualny, zanim dotarł. Licznik zamiast flagi, ponieważ odczyt bywa rozpoczynany z kilku
+   * miejsc, a nie tylko z efektu.
+   */
+  const lastRead = useRef(0);
+
   const refresh = useCallback(async () => {
+    const read = ++lastRead.current;
     setLoading(true);
     /*
      * Komunikat opisuje konkretny wiersz, więc nie może przetrwać zmiany tego, co jest na
@@ -108,6 +125,8 @@ export default function AdminUsers() {
     setNotice(null);
     try {
       const result = await listUsers({ q: query, page, size: PAGE_SIZE });
+      // Rozpoczęto nowszy odczyt, więc ten jest już nieaktualny i nie ma prawa niczego ustawić.
+      if (read !== lastRead.current) return;
       setUsers(result.content ?? []);
       setPageInfo({
         number: result.number ?? 0,
@@ -116,9 +135,14 @@ export default function AdminUsers() {
       });
       setError(null);
     } catch (err) {
+      // Także błąd, inaczej spóźniona awaria sieci wyświetliłaby komunikat nad poprawnie
+      // wczytaną, świeższą listą.
+      if (read !== lastRead.current) return;
       setError(err);
     } finally {
-      setLoading(false);
+      // Wskaźnik ładowania gasi wyłącznie ten odczyt, który go zapalił - inaczej spóźniona
+      // odpowiedź zgasiłaby go w trakcie trwania nowszego.
+      if (read === lastRead.current) setLoading(false);
     }
   }, [query, page]);
 
