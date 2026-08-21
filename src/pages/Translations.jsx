@@ -80,6 +80,19 @@ export default function Translations() {
   }, []);
 
   useEffect(() => {
+    /*
+     * Reguła celuje w stan WYPROWADZANY w efekcie, czyli liczony z czegoś, co jest już znane
+     * podczas renderowania. Tutaj efekt robi to, do czego efekty służą - odpala pobranie danych
+     * z zewnątrz - a jedynym ustawieniem stanu przed pierwszym oczekiwaniem jest zapalenie
+     * wskaźnika ładowania. Przy montowaniu nie kosztuje ono ani jednego dodatkowego renderowania,
+     * bo stan początkowy jest już taki sam; przy późniejszym odświeżeniu kosztuje dokładnie jedno.
+     *
+     * Wyciszone jawnie, a nie obejściem w kodzie: przestawianie tego wywołania tak, żeby reguła
+     * przestała je widzieć, ukryłoby zamiar zamiast go zapisać. Wyciszenie jest w OBU ekranach
+     * naraz - jeden zgodny z regułą, a drugi nie, wyglądałby na przypadkową niekonsekwencję
+     * zamiast na jedną świadomą decyzję.
+     */
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
 
