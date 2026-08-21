@@ -142,6 +142,18 @@ export default function Register() {
         <span>
           Masz już konto? <Link to="/">Zaloguj się</Link>
         </span>
+        {/*
+          Informacja o przetwarzaniu danych ma trafić do człowieka W CHWILI ich zbierania,
+          czyli właśnie tutaj - odnośnik w stopce logowania jest dla kogoś, kto zakłada
+          konto, już po fakcie. Piszemy "znasz zasady", a nie "wyrażasz zgodę": podstawą
+          przetwarzania jest umowa o świadczenie usługi, a nie zgoda, więc udawanie zgody
+          opisywałoby ten stan nieprawdziwie (i sugerowało, że da się ją cofnąć,
+          zostawiając konto).
+        */}
+        <span>
+          Zakładając konto, potwierdzasz, że znasz zasady przetwarzania danych opisane
+          w <Link to="/privacy">polityce prywatności</Link>.
+        </span>
       </footer>
     </div>
   );

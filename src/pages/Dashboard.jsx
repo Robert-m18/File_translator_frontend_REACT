@@ -102,6 +102,15 @@ export default function Dashboard() {
       <button className="button button-ghost" onClick={handleLogout} disabled={loggingOut}>
         {loggingOut ? 'Wylogowywanie…' : 'Wyloguj się'}
       </button>
+
+      {/*
+        Stopka z polityką także za logowaniem, nie tylko na ekranach wejściowych: to tutaj
+        jest napisane, jak usunąć konto, a szuka się tego dopiero wtedy, gdy konto się już
+        ma - czyli nigdy na ekranie logowania.
+      */}
+      <footer className="card-foot">
+        <Link to="/privacy">Polityka prywatności i usunięcie konta</Link>
+      </footer>
     </div>
   );
 }

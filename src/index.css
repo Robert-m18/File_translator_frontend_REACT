@@ -463,6 +463,110 @@ a:hover {
   word-break: break-word;
 }
 
+/* ---------- dokumenty (polityka prywatności) ---------- */
+
+/*
+ * Karta z długim tekstem, a nie z formularzem. Reszta aplikacji składa się z krótkich
+ * bloków, więc .card ustawia im gap: 18px i tyle wystarcza - tutaj trzeba odróżnić odstęp
+ * MIĘDZY sekcjami od odstępu wewnątrz sekcji, inaczej nagłówek przykleja się do akapitu
+ * poprzedniej sekcji tak samo jak do własnej i cały tekst czyta się jak jedna ściana.
+ *
+ * max-width na akapitach nie jest potrzebny: karta ma 760px, czyli mniej więcej tyle, ile
+ * wynosi wygodna długość wiersza.
+ */
+.legal {
+  gap: 0;
+}
+
+/* .card ustawia odstępy przez gap, a gap: 0 wyżej zdejmuje go razem z tym pod nagłówkiem. */
+.legal .card-head {
+  margin-bottom: 20px;
+}
+
+.legal h2 {
+  margin: 28px 0 10px;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.legal p {
+  margin: 0 0 12px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.legal ul {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  font-size: 15px;
+  line-height: 1.65;
+}
+
+.legal li {
+  margin-bottom: 8px;
+}
+
+.legal code {
+  padding: 1px 5px;
+  font-size: 13px;
+  background: var(--grey-100);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  /* Nazwy ciasteczek nie mają spacji, a na wąskim ekranie muszą móc się złamać. */
+  overflow-wrap: anywhere;
+}
+
+.legal .card-foot {
+  margin-top: 28px;
+}
+
+/*
+ * Lista "co zbieramy" - ten sam układ co .details na pulpicie, ale jednokolumnowy:
+ * opisy mają po kilka zdań, a nie jedno słowo, więc w dwóch kolumnach robi się z tego
+ * wąski szlauch tekstu.
+ */
+.legal-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0 0 12px;
+}
+
+.legal-list > div {
+  padding: 12px 14px;
+  background: var(--grey-050);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.legal-list dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.legal-list dd {
+  margin: 6px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+/*
+ * Akapit, który ma być zauważony przy przewijaniu (ostrzeżenie o darmowym planie DeepL).
+ * Szare tło z czerwoną krawędzią z boku, a NIE --danger-bg: różowa powierzchnia znaczy
+ * w tym motywie "coś poszło nie tak" i zostaje komunikatom o błędzie. Tu nic się nie
+ * zepsuło - to informacja, którą trzeba przeczytać przed wgraniem pliku.
+ */
+.callout {
+  padding: 14px 16px;
+  background: var(--grey-050);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--brand-500);
+  border-radius: 10px;
+}
+
 /* ---------- spinner ---------- */
 
 .spinner-wrap {
@@ -571,6 +675,36 @@ a:hover {
 }
 
 /*
+ * Potwierdzenie usunięcia konta - rozwijane w wierszu, tak samo jak formularz powodu
+ * blokady, i z tym samym flex-basis: 100%, bo inaczej wciska się obok przycisków.
+ *
+ * TŁO JEST SZARE, NIE RÓŻOWE, i to jest decyzja zgodna z regułą z nagłówka tego pliku:
+ * --danger-bg znaczy "coś poszło nie tak" i zostaje wyłącznie komunikatom o błędzie.
+ * Tutaj nic się nie zepsuło - to pytanie zadane zanim cokolwiek się wydarzy. Powagę
+ * niesie czerwony NAPIS (.confirm-warning) i czerwony przycisk potwierdzenia, czyli
+ * dokładnie te dwa nośniki, które w tym motywie znaczą "uwaga" i "działanie".
+ */
+.job-confirm {
+  display: flex;
+  flex-basis: 100%;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+  padding: 12px 14px;
+  background: var(--grey-050);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.confirm-warning {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--danger);
+  overflow-wrap: anywhere; /* długi adres email nie ma prawa rozepchnąć wiersza */
+}
+
+/*
  * PODSTAWA 240px, A NIE 0 - i to jest cały ten przepis.
  *
  * Przy flex: 1 (czyli flex-basis: 0) kolumna z adresem nigdy nie ma własnego rozmiaru,
@@ -606,9 +740,21 @@ a:hover {
   font-size: 13px;
 }
 
+/*
+ * flex-wrap DOŁOŻONY RAZEM Z PIĄTYM PRZYCISKIEM ("Usuń") i to nie jest kosmetyka.
+ *
+ * Sam .job z flex-wrap zrzuca .job-actions do własnej linii, gdy przyciski przestają się
+ * mieścić OBOK adresu - ale nie ma jak zawinąć ich MIĘDZY SOBĄ. Przy pięciu przyciskach
+ * (konto z blokadą logowania: Zablokuj, Zdejmij blokadę logowania, Wymuś wylogowanie,
+ * Usuń) sam ten blok bywa szerszy niż karta, więc bez tej linii wystawał poza jej krawędź
+ * i karta zaczynała się przewijać w poziomie. Objaw wyglądałby jak wina jednego wiersza,
+ * bo wiersze z trzema przyciskami mieszczą się bez zarzutu - dokładnie ta sama pułapka,
+ * którą opisuje komentarz przy .job-main.
+ */
 .job-actions {
   display: flex;
   flex-shrink: 0;
+  flex-wrap: wrap;
   gap: 8px;
 }
 

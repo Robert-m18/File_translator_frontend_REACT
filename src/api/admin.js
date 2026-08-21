@@ -41,3 +41,15 @@ export function unlockUser(id) {
 export function forceLogoutUser(id) {
   return request(`/users/${id}/logout`, { method: 'POST' });
 }
+
+/**
+ * Kasuje konto razem z sesjami, zleceniami tłumaczenia i plikami. NIEODWRACALNE.
+ *
+ * Jedyna akcja panelu, która NIE oddaje konta po zmianie - po skasowaniu nie ma czego
+ * pokazać, więc serwer odpowiada 204 bez ciała, a ekran usuwa wiersz zamiast go podmieniać.
+ * Pytanie "czy na pewno" stoi w AdminUsers.jsx: to sprawa interfejsu, a nie API, bo żaden
+ * dodatkowy krok po stronie serwera nie powstrzyma kogoś, kto woła to curlem.
+ */
+export function deleteUser(id) {
+  return request(`/users/${id}`, { method: 'DELETE' });
+}
