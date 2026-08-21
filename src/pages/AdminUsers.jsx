@@ -147,6 +147,9 @@ export default function AdminUsers() {
   }, [query, page]);
 
   useEffect(() => {
+    // Uzasadnienie wyciszenia jest przy tym samym miejscu na ekranie tłumaczeń - oba wyciszenia
+    // są jedną decyzją i zmienia się je razem.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     refresh();
   }, [refresh]);
 

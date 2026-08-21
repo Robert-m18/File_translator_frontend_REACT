@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+
+# Nowy push na tę samą gałąź anuluje poprzedni, jeszcze trwający przebieg.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  # Jedno zadanie, trzy kroki w kolejności rosnącego kosztu: lint, testy, budowanie.
+  #
+  # PO CO TO ISTNIEJE. Do tej pory front nie miał żadnego przebiegu automatycznego, a wdrożenie
+  # na platformę hostingową wykonuje wyłącznie instalację i budowanie - czyli testy nie
+  # uruchamiały się przed wydaniem ANI RAZU. Wyścig odpowiedzi na listach przeszedł tą drogą
+  # przez lint, budowanie i wdrożenie, nie zostawiając śladu: żadne z tych narzędzi nie patrzy
+  # na kolejność, w jakiej wracają odpowiedzi.
+  #
+  # Kroki są osobne, a nie sklejone w jedno polecenie, ponieważ w podsumowaniu przebiegu widać
+  # wtedy, KTÓRY z nich padł. Sklejone łańcuchem dają jeden czerwony wiersz i trzeba wchodzić
+  # w dziennik, żeby ustalić, czy to składnia, czy test, czy budowanie.
+  build:
+    name: Lint, test & build
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node 24
+        uses: actions/setup-node@v4
+        with:
+          # Ta sama główna wersja co w obrazie kontenera i na maszynie deweloperskiej.
+          node-version: '24'
+          # Cache pobranych pakietów - bez tego każdy przebieg ciągnie je od nowa.
+          cache: npm
+
+      # "npm ci", a nie "npm install", i to jest tu istotne: instaluje DOKŁADNIE to, co stoi
+      # w pliku blokady, i przerywa, gdy plik ten rozjedzie się z deklaracją zależności.
+      # Platforma hostingowa buduje tym samym poleceniem, więc rozjazd ma paść tutaj, a nie
+      # dopiero przy wydaniu.
+      #
+      # Plik blokady powstaje na Windowsie, a instalacja idzie na Linuksie - sprawdzone, że
+      # ta kombinacja działa, ale to właśnie ona już raz zepsuła wydanie, więc krok jest
+      # celowo osobny i widoczny.
+      - name: Install dependencies
+        run: npm ci
+
+      # Reguły stylu i typowe pomyłki. Dwa świadome wyciszenia siedzą w kodzie z uzasadnieniem
+      # przy samym miejscu - dzięki temu ten krok jest zielony i wychwytuje NOWE naruszenia,
+      # zamiast być stale czerwony i przez to ignorowany.
+      - name: Lint
+        run: npm run lint
+
+      # Zestaw testów. Pokrywa to, co już się psuło: mechanikę rozmowy z API, wyścig odpowiedzi
+      # na listach, gałąź oczekiwania w strażnikach tras oraz reguły walidacji lustrzane wobec
+      # polityki serwera.
+      - name: Test
+        run: npm test
+
+      # Budowanie na końcu: nie ma sensu składać wydania z kodu, którego testy nie przeszły.
+      - name: Build
+        run: npm run build
+
+      - name: Upload build output
+        # Uruchamiane także po nieudanym przebiegu - zawartość katalogu wynikowego przydaje się
+        # najbardziej wtedy, kiedy coś poszło nie tak.
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: warn
