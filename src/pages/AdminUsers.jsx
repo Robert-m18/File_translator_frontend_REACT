@@ -17,11 +17,11 @@ const PAGE_SIZE = 20;
 /**
  * Polska odmiana przez liczebnik: osobna forma dla 1, dla 2-4 i dla reszty.
  *
- * Wyjątek od "2-4" to NASTKI - 12, 13 i 14 idą do formy mnogiej ("kont", nie "konta"),
- * i to samo dotyczy 112, 113, 114. Stąd warunek na resztach z dzielenia przez 10 ORAZ
+ * Wyjątkiem od formy dla 2-4 są liczebniki nastkowe, które przyjmują formę mnogą, i to samo
+ * dotyczy ich odpowiedników w setkach. Stąd warunek na resztach z dzielenia przez 10 oraz
  * przez 100; sam mod 10 dawałby "13 konta".
  *
- * Odmieniać trzeba CAŁĄ frazę, nie sam rzeczownik: przymiotnik uzgadnia się z liczebnikiem
+ * Odmieniana jest cała fraza, a nie sam rzeczownik: przymiotnik uzgadnia się z liczebnikiem
  * tak samo ("1 konto pasujące", ale "5 kont pasujących"), więc doklejenie stałego
  * "pasujących" do odmienionego rzeczownika daje zdanie niezgodne samo ze sobą.
  */
@@ -47,22 +47,22 @@ function formatDate(value) {
 /**
  * Panel administracyjny - konta użytkowników.
  *
- * TRZY STANY KONTA, KTÓRE TRZEBA ROZRÓŻNIAĆ, i dlatego każdy ma własną odznakę:
+ * Konto może być w jednym z trzech stanów i każdy ma własną odznakę:
  * blokada administracyjna (nie mija sama, zdejmuje ją tylko administrator), blokada po
  * nieudanych logowaniach (mija sama po 15 minutach) i konto aktywne. Zlanie dwóch
  * pierwszych w jedno "zablokowany" sprawiłoby, że administrator zdejmowałby karę
  * w przekonaniu, że odblokowuje kogoś, kto pomylił hasło.
  *
- * WYSZUKIWARKA JEST FORMULARZEM Z PRZYCISKIEM, a nie filtrowaniem przy każdym znaku:
+ * Wyszukiwarka jest formularzem z przyciskiem, a nie filtrowaniem przy każdym znaku:
  * każde wciśnięcie klawisza to skan LIKE po kolumnie email w bazie. Przy dziesięciu
  * kontach nie widać różnicy, przy dziesięciu tysiącach widać ją wyłącznie po stronie
  * serwera - czyli tam, gdzie nikt nie patrzy.
  *
- * POWÓD BLOKADY WPISUJE SIĘ W WIERSZU, nie w window.prompt: jest częścią śladu audytowego,
- * który przeczyta następny administrator, więc ma być polem formularza z widoczną etykietą,
- * a nie okienkiem przeglądarki, które da się odklikać w pół sekundy.
+ * Powód blokady wpisuje się w wierszu, a nie w okienku przeglądarki: jest częścią śladu
+ * audytowego, który przeczyta następny administrator, więc ma być polem formularza
+ * z widoczną etykietą, a nie komunikatem, który da się odklikać w pół sekundy.
  *
- * USUNIĘCIE KONTA JEST JEDYNĄ AKCJĄ NIEODWRACALNĄ i dlatego jako jedyna wymaga drugiego
+ * Usunięcie konta jest jedyną akcją nieodwracalną i dlatego jako jedyna wymaga drugiego
  * kliknięcia. Pytanie rozwija się w wierszu, wymienia z nazwy wszystko, co zniknie, i mówi
  * wprost, że blokada jest tańszą odpowiedzią na "odciąć dostęp". Reszta akcji zostaje
  * jednoklikowa - potwierdzanie czegoś, co da się cofnąć jednym przyciskiem obok, uczy
@@ -87,23 +87,23 @@ export default function AdminUsers() {
 
   /*
    * Wiersz, dla którego rozwinięto pytanie "czy na pewno usunąć". Osobny stan od blockingId
-   * i wzajemnie się wykluczające (otwarcie jednego zamyka drugie): oba rozwijają się pod
-   * wierszem na całą jego szerokość, więc dwa naraz to dwa bloki jeden na drugim, w których
-   * łatwo kliknąć nie ten przycisk, co trzeba - przy operacji nieodwracalnej to zły moment
-   * na niespodziankę.
+   * i wzajemnie się wykluczający - otwarcie jednego zamyka drugie - ponieważ oba rozwijają się
+   * pod wierszem na całą jego szerokość, więc dwa naraz dałyby dwa bloki jeden na drugim,
+   * w których łatwo kliknąć nie ten przycisk, co trzeba - a przy operacji nieodwracalnej jest
+   * to zły moment na niespodziankę.
    */
   const [deletingId, setDeletingId] = useState(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
     /*
-     * Komunikat opisuje KONKRETNY wiersz ("Konto odblokowane."), więc nie może przeżyć
-     * zmiany tego, co jest na ekranie. Bez tego wisiał nad drugą stroną pagera i nad
-     * wynikami nowego wyszukiwania - czyli nad kontami, których nie dotyczy.
+     * Komunikat opisuje konkretny wiersz, więc nie może przetrwać zmiany tego, co jest na
+     * ekranie - inaczej wisiałby nad kolejną stroną listy i nad wynikami nowego wyszukiwania,
+     * czyli nad kontami, których nie dotyczy.
      *
-     * Miejsce jest bezpieczne, bo refresh NIE JEST wołany po akcjach: te podmieniają
-     * pojedynczy wiersz przez replaceRow. Zależność useCallback to [query, page], więc
-     * czyścimy dokładnie wtedy, gdy zmienia się zestaw wierszy.
+     * Miejsce jest bezpieczne, ponieważ odświeżenie listy nie jest wołane po akcjach - te
+     * podmieniają pojedynczy wiersz. Czyszczenie następuje więc dokładnie wtedy, gdy zmienia
+     * się zestaw wierszy.
      */
     setNotice(null);
     try {
@@ -163,14 +163,14 @@ export default function AdminUsers() {
   }
 
   /**
-   * Kasowanie konta. NIE idzie przez runAction, bo tamten podmienia wiersz odpowiedzią
-   * z serwera - a tutaj odpowiedzią jest 204 bez ciała i wiersza nie ma już czym podmienić.
+   * Kasowanie konta nie idzie przez wspólną obsługę akcji, ponieważ tamta podmienia wiersz
+   * odpowiedzią serwera, a tutaj odpowiedź nie ma ciała i wiersza nie ma już czym podmienić.
    *
-   * Usuwamy wiersz LOKALNIE, zamiast przeładowywać listę, i to jest świadome: refresh()
-   * czyści komunikat (celowo, bo opisuje konkretny wiersz), więc po odświeżeniu
-   * administrator nie zobaczyłby potwierdzenia tego, co przed chwilą zrobił. Licznik
-   * kont zmniejszamy razem z wierszem, żeby nagłówek nie kłamał; podział na strony
-   * przeliczy się przy najbliższym wyszukiwaniu albo przejściu na inną stronę.
+   * Wiersz usuwany jest lokalnie, zamiast przeładowania listy, i jest to świadome: odświeżenie
+   * czyści komunikat, bo opisuje on konkretny wiersz, więc po przeładowaniu administrator nie
+   * zobaczyłby potwierdzenia tego, co przed chwilą zrobił. Licznik kont zmniejszany jest razem
+   * z wierszem, żeby nagłówek nie kłamał, a podział na strony przeliczy się przy najbliższym
+   * wyszukiwaniu albo przejściu na inną stronę.
    */
   async function handleDelete(target) {
     setBusyId(target.id);
@@ -324,7 +324,7 @@ export default function AdminUsers() {
                       runAction(
                         row.id,
                         () => forceLogoutUser(row.id),
-                        // Mówimy prawdę, a nie to, co brzmi lepiej: sesje giną od razu,
+                        // Komunikat mówi prawdę, a nie to, co brzmi lepiej: sesje giną od razu,
                         // ale token dostępowy jest bezstanowy i żyje do 15 minut.
                         'Sesje zerwane. Token dostępowy wygaśnie w ciągu 15 minut.',
                       )
@@ -334,9 +334,9 @@ export default function AdminUsers() {
                   </button>
 
                   {/*
-                    Własnego konta nie da się usunąć - serwer odpowiada 409 CANNOT_DELETE_SELF
-                    niezależnie od tego, co pokazuje ekran. Ukrycie przycisku jest WYGODĄ,
-                    nie zabezpieczeniem: nie ma po co proponować akcji, która zawsze odmówi.
+                    Własnego konta nie da się usunąć - serwer odrzuca takie żądanie niezależnie
+                    od tego, co pokazuje ekran. Ukrycie przycisku jest wygodą, a nie
+                    zabezpieczeniem: nie ma po co proponować akcji, która zawsze odmówi.
                   */}
                   {row.id !== me?.id && (
                     <button
@@ -379,15 +379,14 @@ export default function AdminUsers() {
                 )}
 
                 {/*
-                  Potwierdzenie usunięcia. NIE window.confirm - z tego samego powodu, dla
-                  którego powód blokady jest polem w wierszu: okienko przeglądarki odklikuje
-                  się odruchowo i nie ma miejsca na wypisanie, co dokładnie zniknie.
-                  Nie jest to też <form>: Enter nie ma prawa uruchamiać operacji, po której
-                  nie ma powrotu.
+                  Potwierdzenie usunięcia rozwija się w wierszu, a nie w okienku przeglądarki -
+                  z tego samego powodu, dla którego powód blokady jest polem formularza: okienko
+                  odklikuje się odruchowo i nie ma w nim miejsca na wypisanie, co dokładnie zniknie.
+                  Nie jest to również formularz: klawisz Enter nie ma prawa uruchamiać operacji,
+                  po której nie ma powrotu.
 
-                  Adres konta stoi w treści pytania celowo - w liście z dwudziestoma wierszami
-                  to jedyna rzecz, która potwierdza, że rozwinął się TEN wiersz, o który
-                  chodziło.
+                  Adres konta w treści pytania jest celowy: na liście z wieloma wierszami to
+                  jedyne potwierdzenie, że rozwinął się właśnie ten wiersz, o który chodziło.
                 */}
                 {deletingId === row.id && (
                   <div className="job-confirm">

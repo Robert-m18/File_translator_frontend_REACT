@@ -1,12 +1,12 @@
 /**
  * Reguły lustrzane wobec @ValidPassword po stronie serwera (min 8, max 72, litera + cyfra).
  *
- * Poprzednia wersja przepuszczała hasła 6-znakowe, więc użytkownik dostawał 400 dopiero
- * po wysłaniu formularza. Walidacja we froncie NIE jest zabezpieczeniem - serwer i tak
- * sprawdza wszystko od nowa - ale ma nie kłamać co do wymagań.
+ * Walidacja we froncie nie jest zabezpieczeniem - serwer i tak sprawdza wszystko od nowa -
+ * ale ma nie kłamać co do wymagań: reguły luźniejsze niż serwerowe kończą się odrzuceniem
+ * formularza dopiero po jego wysłaniu.
  *
- * Górne 72 znaki nie są widzimisię: BCrypt ucina wejście po 72 bajtach, więc dłuższe
- * hasło daje fałszywe poczucie bezpieczeństwa.
+ * Górne ograniczenie wynika z algorytmu haszowania, który ucina wejście po 72 bajtach - bez
+ * niego dłuższe hasło dawałoby fałszywe poczucie bezpieczeństwa.
  */
 export const PASSWORD_HINT = 'Min. 8 znaków, w tym co najmniej jedna litera i jedna cyfra';
 

@@ -1,29 +1,28 @@
 /**
  * Jedyne miejsce, przez które ta aplikacja rozmawia z API.
  *
- * Trzy rzeczy są tu obowiązkowe i żadna nie jest kosmetyką:
+ * Trzy zasady obowiązują tu bezwyjątkowo:
  *
- * 1. credentials: 'include' przy KAŻDYM wywołaniu. Tożsamość niesie ciasteczko httpOnly,
- *    nie nagłówek Authorization. Bez tej flagi fetch nie wyśle ciasteczek na inny origin
- *    (front stoi na :5173, API na :2009) i wszystko wraca 401 - objaw mylący, bo wygląda
- *    jak wygasła sesja, a ciasteczko po prostu nigdy nie wyszło z przeglądarki.
+ * 1. Każde wywołanie dołącza ciasteczka. Tożsamość niesie ciasteczko niedostępne dla
+ *    JavaScriptu, a nie nagłówek autoryzacji, więc bez tej flagi przeglądarka nie wyśle go na
+ *    inny origin i wszystkie odpowiedzi wracają jako brak uwierzytelnienia - objaw mylący, bo
+ *    wygląda jak wygasła sesja, choć ciasteczko po prostu nie opuściło przeglądarki.
  *
- * 2. Token CSRF pobierany z GET /auth/csrf i odsyłany w NAGŁÓWKU. Ciasteczko XSRF-TOKEN
- *    jest httpOnly, więc JavaScript go nie odczyta - i nie musi. Przeglądarka dosyła
- *    ciasteczko sama, my dokładamy tę samą wartość w nagłówku, a serwer porównuje jedno
- *    z drugim. Dlatego token trzymamy w pamięci modułu, NIE w localStorage: przeżycie
- *    odświeżenia strony nic by nie dało (i tak pobieramy nowy), a byłby wystawiony na XSS.
+ * 2. Token CSRF pobierany jest osobnym żądaniem i odsyłany w nagłówku. Ciasteczko z tokenem
+ *    jest niedostępne dla skryptów, więc przeglądarka dosyła je sama, aplikacja dokłada tę samą
+ *    wartość w nagłówku, a serwer porównuje jedno z drugim. Token trzymany jest w pamięci
+ *    modułu, a nie w pamięci trwałej przeglądarki: przetrwanie odświeżenia strony niczego by
+ *    nie dało, bo i tak pobierany jest nowy, a wartość byłaby wystawiona na ataki skryptowe.
  *
- * 3. Błędy przychodzą jako RFC 9457 ProblemDetail: { detail, status, code, traceId }.
- *    Komunikat siedzi w "detail", nie w "message". Rozgałęziać się należy po "code" -
- *    to stabilny identyfikator maszynowy, podczas gdy "detail" jest tekstem dla człowieka
- *    i może się zmienić w każdej chwili.
+ * 3. Błędy przychodzą w formacie RFC 9457. Komunikat dla człowieka znajduje się w polu opisu,
+ *    natomiast rozgałęziać się należy po kodzie maszynowym - opis jest tekstem, który może
+ *    zmienić się w każdej chwili.
  */
 
 /**
- * Eksportowane, bo logowanie przez Google NIE idzie przez fetch, tylko przez zwykłą
- * nawigację przeglądarki (patrz auth/google.js) - a adres trzeba złożyć z tej samej
- * podstawy co reszta wywołań, żeby nie istniały dwa źródła prawdy o tym, gdzie stoi API.
+ * Eksportowane, ponieważ logowanie przez Google nie idzie przez wywołanie API, tylko przez
+ * zwykłą nawigację przeglądarki, a adres trzeba złożyć z tej samej podstawy co reszta
+ * wywołań, żeby nie istniały dwa źródła prawdy o tym, gdzie stoi API.
  */
 export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:2009';
 
@@ -39,8 +38,8 @@ export function setSessionLostHandler(fn) {
 /**
  * Błąd API z zachowanym kodem maszynowym i traceId.
  *
- * traceId niesiemy aż na ekran, bo to jedyny sposób, żeby użytkownik zgłaszający
- * "nie działa" mógł podać coś, po czym da się odnaleźć jego żądanie w logach serwera.
+ * Identyfikator żądania trafia aż na ekran, bo jest jedynym sposobem, żeby użytkownik
+ * zgłaszający problem mógł podać coś, po czym da się odnaleźć jego żądanie w logach serwera.
  */
 export class ApiError extends Error {
   constructor(message, { status = 0, code = null, traceId = null } = {}) {
@@ -55,24 +54,23 @@ export class ApiError extends Error {
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 
 /**
- * Komunikat na wypadek, gdy z serwerem nie da się porozmawiać.
+ * Buduje komunikat na wypadek, gdy z serwerem nie da się porozmawiać.
  *
- * JEDNA funkcja zamiast powtórzonego łańcucha w każdym miejscu wołającym fetch - inaczej
- * kopie rozjeżdżają się przy pierwszej zmianie tekstu i użytkownik dostaje inny komunikat
- * przy logowaniu, a inny przy pobieraniu pliku.
+ * Jedna funkcja zamiast powtórzonego tekstu w każdym miejscu wołającym żądanie: kopie
+ * rozjechałyby się przy pierwszej zmianie treści i użytkownik dostawałby inny komunikat przy
+ * logowaniu, a inny przy pobieraniu pliku.
  *
- * Treść jest dla UŻYTKOWNIKA, nie dla programisty. Poprzednia wersja mówiła "Sprawdź, czy
- * backend działa" - zdanie sensowne wyłącznie dla kogoś, kto ma ten backend na własnym
- * dysku. Osoba korzystająca z aplikacji nie ma czego sprawdzić ani jak, więc jedyne, co
- * może zrobić, to spróbować później - i to właśnie mówimy.
+ * Treść jest adresowana do użytkownika, a nie do programisty. Rada w rodzaju "sprawdź, czy
+ * backend działa" ma sens wyłącznie dla kogoś, kto ma ten backend na własnym dysku; osoba
+ * korzystająca z aplikacji nie ma czego sprawdzić, więc jedyne, co może zrobić, to spróbować
+ * później.
  *
- * ŚWIADOME UPROSZCZENIE: fetch rzuca tym samym wyjątkiem przy wyłączonym serwerze, przy
- * zerwanym łączu użytkownika i przy odbiciu CORS - z przeglądarki NIE DA SIĘ tych
- * przypadków rozróżnić (to celowe ograniczenie, żeby strona nie mogła skanować sieci).
- * Wskazujemy więc na siebie, mimo że wina bywa po drugiej stronie: przy naszej awarii to
- * prawda, a przy cudzej - użytkownik i tak nie ma czego naprawić w aplikacji, a zdanie
- * "sprawdź swoje połączenie" przy DZIAŁAJĄCYM internecie jest gorsze niż nieprecyzyjne
- * przeprosiny, bo wysyła w bezowocną pogoń.
+ * Świadome uproszczenie: przeglądarka zgłasza ten sam błąd przy wyłączonym serwerze, zerwanym
+ * łączu i odbiciu polityki CORS, a rozróżnienie tych przypadków jest z poziomu strony
+ * niemożliwe - to celowe ograniczenie, żeby strona nie mogła skanować sieci. Komunikat wskazuje
+ * więc na stronę aplikacji, mimo że wina bywa po drugiej: przy jej awarii jest to prawda, a przy
+ * cudzej użytkownik i tak nie ma czego naprawić, natomiast rada "sprawdź połączenie" przy
+ * działającym internecie wysyła go w bezowocną pogoń.
  */
 function serverUnreachable(traceId = null) {
   return new ApiError(
@@ -82,16 +80,16 @@ function serverUnreachable(traceId = null) {
 }
 
 /**
- * Awaria serwera, która JEST odpowiedzią HTTP (500, 502, 503, 504).
+ * Awaria serwera, która ma postać odpowiedzi HTTP.
  *
- * Osobno od powyższej, bo tutaj serwer odpowiedział - tyle że albo bez ciała, albo ciałem,
- * którego nie da się odczytać (stronę błędu potrafi podstawić proxy przed aplikacją,
- * i będzie to HTML, nie ProblemDetail). Gdy ciało JEST poprawnym ProblemDetail, wygrywa
- * jego "detail": nasz backend pisze tam zdanie po polsku, konkretniejsze niż cokolwiek,
- * co dałoby się napisać tutaj na zapas.
+ * Przypadek odrębny od powyższego, bo serwer odpowiedział - tyle że bez ciała albo ciałem,
+ * którego nie da się odczytać, bo stronę błędu potrafi podstawić proxy stojące przed
+ * aplikacją. Gdy ciało jest poprawnym opisem błędu, pierwszeństwo ma zawarty w nim opis:
+ * serwer podaje tam konkretniejszy komunikat niż cokolwiek, co dałoby się napisać tutaj
+ * na zapas.
  *
- * traceId przekazujemy dalej, jeśli przyszedł - to jedyna rzecz, po której da się odnaleźć
- * to żądanie w logach serwera, więc nie wolno jej zgubić właśnie przy awarii.
+ * Identyfikator żądania jest przekazywany dalej, jeśli przyszedł - to jedyna rzecz, po której
+ * da się odnaleźć żądanie w logach, więc nie wolno jej zgubić właśnie przy awarii.
  */
 function serverFault(status, traceId) {
   return new ApiError(
@@ -104,7 +102,7 @@ async function parseBody(res) {
   if (res.status === 204) return null;
 
   // res.text() też potrafi rzucić - gdy połączenie padnie w trakcie czytania ciała.
-  // Traktujemy to jak brak ciała, bo wołający i tak ma już status odpowiedzi i poradzi
+  // Sytuacja traktowana jest jak brak ciała, bo wołający ma już status odpowiedzi i poradzi
   // sobie bez treści; nieosłonięte dałoby surowy wyjątek przeglądarki na ekranie.
   let text;
   try {
@@ -124,14 +122,11 @@ async function parseBody(res) {
 /**
  * Pobiera świeży token CSRF. Odpowiedź niesie też nazwę nagłówka, w którym go odesłać.
  *
- * TO BYŁ JEDYNY fetch W TYM PLIKU BEZ try/catch - i właśnie tędy przeciekało na ekran
- * surowe "Failed to fetch" z przeglądarki. Ta funkcja jest wołana z send() PRZED każdym
- * żądaniem zmieniającym stan, czyli wcześniej niż osłonięty fetch poniżej: przy
- * niedziałającym serwerze wyjątek leciał stąd i nigdy nie docierał do tamtej obsługi.
- * Objaw był mylący podwójnie - komunikat po angielsku, w aplikacji pisanej po polsku,
- * i pojawiający się WYŁĄCZNIE po kliknięciu przycisku (logowanie, rejestracja, wysłanie
- * pliku), podczas gdy samo wejście na stronę - czyli GET /auth/me - pokazywało komunikat
- * poprawny. Wyglądało to na błąd konkretnego formularza, a nie na brak serwera.
+ * Wywołanie jest osłonięte własną obsługą błędów, ponieważ wykonuje się przed każdym żądaniem
+ * zmieniającym stan, czyli wcześniej niż osłonięte żądanie właściwe. Przy niedziałającym
+ * serwerze nieosłonięty błąd wychodziłby właśnie stąd i trafiał na ekran jako surowy komunikat
+ * przeglądarki - w dodatku wyłącznie po kliknięciu przycisku, podczas gdy samo wejście na stronę
+ * pokazywałoby komunikat poprawny, co wygląda na błąd formularza, a nie na brak serwera.
  */
 async function loadCsrf() {
   let res;
@@ -142,7 +137,7 @@ async function loadCsrf() {
   }
 
   if (!res.ok) {
-    // Serwer odpowiedział, ale nie tokenem. Cokolwiek to jest, dalej nie ruszymy -
+    // Serwer odpowiedział, ale nie tokenem. Bez tokenu nie da się iść dalej,
     // bez tokenu każde żądanie zmieniające stan odbije się o CSRF.
     throw serverFault(res.status, null);
   }
@@ -150,8 +145,8 @@ async function loadCsrf() {
   try {
     csrf = await res.json();
   } catch {
-    // 200 z ciałem, które nie jest JSON-em, to prawie na pewno strona podstawiona przez
-    // proxy albo portal przechwytujący ruch. Dla nas nieodróżnialne od awarii serwera.
+    // Odpowiedź poprawna, ale z ciałem, które nie jest dokumentem JSON, to prawie na pewno
+    // strona podstawiona przez proxy albo portal przechwytujący ruch - nieodróżnialne od awarii.
     throw serverFault(res.status, null);
   }
   return csrf;
@@ -185,7 +180,7 @@ export async function upload(path, formData) {
 /**
  * Pobiera plik i oddaje go razem z nazwą zaproponowaną przez serwer.
  *
- * DLACZEGO NIE ZWYKŁY <a href download>: przeglądarka IGNORUJE atrybut download przy
+ * Zwykły odnośnik pobierania nie wystarcza: przeglądarka ignoruje atrybut pobierania przy
  * odnośniku na inny origin (front stoi na :5173, API na :2009), więc plik otworzyłby się
  * w karcie zamiast zapisać. Zwykła nawigacja omija też całą obsługę błędów - zamiast
  * komunikatu użytkownik zobaczyłby surowy JSON na białej stronie.
@@ -258,7 +253,7 @@ async function send(path, { method, body, allowRefresh, retried }) {
       body: body === undefined || isMultipart ? body : JSON.stringify(body),
     });
   } catch {
-    // fetch rzuca tylko przy błędzie sieci - serwer nieuruchomiony, brak internetu, CORS
+    // Wyjątek na tym poziomie oznacza wyłącznie błąd sieci: brak serwera, brak łącza albo CORS.
     throw serverUnreachable();
   }
 
@@ -267,8 +262,8 @@ async function send(path, { method, body, allowRefresh, retried }) {
   const problem = await parseBody(res);
   const code = problem?.code ?? null;
 
-  // Token CSRF przeterminowany albo wymieniony przez serwer - pobieramy nowy i ponawiamy
-  // dokładnie raz. Serwer wystawia na to osobny kod właśnie po to, żeby front mógł
+  // Token CSRF przeterminowany albo wymieniony przez serwer - pobierany jest nowy, a żądanie
+  // ponawiane dokładnie raz. Serwer wystawia na to osobny kod właśnie po to, żeby front mógł
   // spróbować ponownie, zamiast wylogowywać użytkownika.
   if (res.status === 403 && code === 'CSRF_TOKEN_INVALID' && !retried) {
     await loadCsrf();
@@ -276,30 +271,25 @@ async function send(path, { method, body, allowRefresh, retried }) {
   }
 
   /*
-   * Token dostępowy żyje 15 minut. Jego wygaśnięcie to normalny stan przy dłuższej pracy,
-   * a nie błąd - wymieniamy go po cichu i wracamy do pierwotnego żądania.
+   * Token dostępowy żyje kwadrans, więc jego wygaśnięcie jest normalnym stanem przy dłuższej
+   * pracy, a nie błędem: sesja jest wtedy odnawiana po cichu, a pierwotne żądanie ponawiane.
    *
-   * DWA KODY, NIE JEDEN - i to jest sedno. EXPIRED_TOKEN w PRZEGLĄDARCE nie występuje
-   * praktycznie nigdy: żeby serwer go zwrócił, żądanie musiałoby NIEŚĆ token po terminie,
-   * a ciasteczko accessToken ma max-age równe ważności tokenu, więc znika dokładnie w tej
-   * samej chwili, w której token przestaje być ważny. Żądanie leci wtedy BEZ ciasteczka
-   * i dostaje UNAUTHENTICATED - ten sam kod co gość, który nigdy się nie logował.
+   * Warunek obejmuje dwa kody, i to jest tu sedno. Kod oznaczający wygasły token praktycznie
+   * nie występuje w przeglądarce: żeby serwer go zwrócił, żądanie musiałoby nieść token po
+   * terminie, a ciasteczko ma czas życia równy ważności tokenu, więc znika dokładnie w chwili,
+   * w której token przestaje być ważny. Żądanie leci wtedy bez ciasteczka i dostaje ten sam kod
+   * co gość, który nigdy się nie logował. Warunek zawężony do samego wygaśnięcia nie mógłby się
+   * więc spełnić, a tygodniowy token odświeżający nie byłby używany nigdy - po kwadransie każda
+   * akcja cicho kończyłaby się odmową, a odświeżenie strony wyrzucało na ekran logowania.
    *
-   * Warunek tylko na EXPIRED_TOKEN nie mógł się więc spełnić i skutek był taki, że
-   * siedmiodniowy token odświeżający nie był używany NIGDY: po 15 minutach każda akcja
-   * cicho zwracała 401, a odświeżenie strony wyrzucało na ekran logowania. Objaw mylił,
-   * bo wyglądał na krótką ważność sesji, a nie na nieużywany mechanizm odnowienia.
-   * Znalezione 2026-08-16 przy ręcznym przeklikiwaniu panelu, gdy sesja padła w połowie.
+   * Świadomie przyjęta cena: gość również dostaje ten kod, więc jego wejście kosztuje dwa
+   * dodatkowe żądania, zanim zobaczy ekran logowania. Odróżnienie gościa od wygasłej sesji po
+   * stronie przeglądarki nie jest możliwe, bo ciasteczka są niedostępne dla skryptów, a flaga
+   * w pamięci trwałej przeglądarki kłamie w obie strony. Dwa żądania raz na wejście są tańsze
+   * niż sesja umierająca co kwadrans.
    *
-   * CENA, PRZYJĘTA ŚWIADOMIE: gość również dostaje UNAUTHENTICATED, więc jego wejście
-   * kosztuje teraz dwa dodatkowe żądania (GET /auth/csrf + POST /auth/refresh), zanim
-   * zobaczy ekran logowania. Odróżnić gościa od wygasłej sesji NIE DA SIĘ po stronie
-   * frontu - ciasteczka są httpOnly - a flaga w localStorage kłama w obie strony
-   * (uzasadnienie w AuthContext). Dwa żądania raz na wejście są tańsze niż sesja
-   * umierająca co kwadrans.
-   *
-   * Refresh idzie z allowRefresh: false, więc jego własne 401 (REFRESH_TOKEN_MISSING)
-   * nie zawraca tu ponownie.
+   * Samo odnowienie sesji idzie z wyłączonym ponawianiem, więc jego własna odmowa nie zawraca
+   * tu ponownie.
    */
   const staleAccessToken = code === 'EXPIRED_TOKEN' || code === 'UNAUTHENTICATED';
 
@@ -325,14 +315,13 @@ async function send(path, { method, body, allowRefresh, retried }) {
   }
 
   /*
-   * Awaria po stronie serwera. Bez tej gałęzi 502 albo 503 od proxy - odpowiedzi, które
-   * nie niosą ProblemDetail, bo aplikacja w ogóle ich nie wygenerowała - wpadały na
-   * "Wystąpił nieoczekiwany błąd": zdanie prawdziwe, ale nieodróżnialne od naszego błędu
-   * walidacji i nieniosące jedynej użytecznej informacji, czyli "spróbuj później".
+   * Awaria po stronie serwera. Bez tej gałęzi odpowiedzi wystawiane przez proxy - a więc bez
+   * ustandaryzowanego opisu błędu, bo aplikacja w ogóle ich nie wygenerowała - wpadałyby na
+   * komunikat ogólny: zdanie prawdziwe, ale nieodróżnialne od błędu walidacji i nieniosące
+   * jedynej użytecznej informacji, czyli tego, że warto spróbować później.
    *
-   * "problem?.detail ||", a nie sam warunek na status: gdy nasz backend odpowie 500
-   * porządnym ProblemDetail, jego "detail" jest konkretniejszy niż cokolwiek napisanego
-   * tutaj na zapas, więc ma pierwszeństwo.
+   * Pierwszeństwo ma opis z ciała odpowiedzi: gdy serwer odpowie błędem wraz z poprawnym
+   * opisem, jest on konkretniejszy niż cokolwiek napisanego tutaj na zapas.
    */
   if (res.status >= 500 && !problem?.detail) {
     throw serverFault(res.status, problem?.traceId ?? null);

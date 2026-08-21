@@ -1,12 +1,12 @@
 /**
  * Stan sesji dla całej aplikacji.
  *
- * Źródłem prawdy jest WYŁĄCZNIE serwer, odpytywany przez GET /auth/me. Kuszące jest
- * trzymanie flagi "zalogowany" w localStorage, ale taka flaga kłamie w obie strony:
- * zostaje po wygaśnięciu sesji (użytkownik widzi dashboard, a każde żądanie wraca 401)
- * i znika po wyczyszczeniu przeglądarki mimo ważnej sesji na serwerze. Ciasteczka są
- * httpOnly, więc JavaScript i tak ich nie odczyta - jedyne wiarygodne pytanie
- * to pytanie do serwera.
+ * Źródłem prawdy jest wyłącznie serwer, odpytywany osobnym endpointem. Flaga zalogowania
+ * trzymana w pamięci przeglądarki kłamałaby w obie strony: zostawałaby po wygaśnięciu
+ * sesji, przez co użytkownik widziałby pulpit, na którym każde żądanie kończy się odmową,
+ * i znikałaby po wyczyszczeniu danych przeglądarki mimo ważnej sesji na serwerze. Ciasteczka
+ * są niedostępne dla skryptów, więc jedyne wiarygodne pytanie o stan sesji to pytanie
+ * do serwera.
  */
 import { useCallback, useEffect, useState } from 'react';
 import { meRequest, loginRequest, logoutRequest } from '../api/auth';
@@ -20,7 +20,7 @@ export function AuthProvider({ children }) {
   const [status, setStatus] = useState('loading');
 
   useEffect(() => {
-    // Gdy klient wyczerpie próby odświeżenia tokenu, czyścimy stan bez pytania serwera.
+    // Gdy warstwa API wyczerpie próby odnowienia sesji, stan czyszczony jest bez pytania serwera.
     setSessionLostHandler(() => {
       setUser(null);
       setStatus('anonymous');
@@ -28,11 +28,11 @@ export function AuthProvider({ children }) {
 
     let cancelled = false;
 
-    // BEZ allowRefresh: false. Ciasteczko accessToken znika razem z ważnością tokenu
-    // (max-age = 15 min), więc "brak ciasteczka" to przy starcie DWIE różne sytuacje:
-    // gość i wracający użytkownik z żywym tokenem odświeżającym. Klient próbuje więc
-    // odnowić sesję, zanim uzna kogoś za anonimowego - inaczej każdy powrót po kwadransie
-    // kończył się ekranem logowania. Pełne uzasadnienie i cena: client.js.
+    // Odnawianie sesji pozostaje włączone. Ciasteczko z tokenem znika razem z jego ważnością,
+    // więc brak ciasteczka oznacza przy starcie dwie różne sytuacje: gościa oraz wracającego
+    // użytkownika z ważnym tokenem odnawiającym. Warstwa API próbuje więc odnowić sesję,
+    // zanim uzna kogoś za anonimowego - inaczej każdy powrót po kwadransie kończyłby się
+    // ekranem logowania.
     meRequest()
       .then((data) => {
         if (cancelled) return;
@@ -40,8 +40,8 @@ export function AuthProvider({ children }) {
         setStatus('authenticated');
       })
       .catch(() => {
-        // Dotąd docieramy dopiero, gdy nie udało się TAKŻE odświeżenie - czyli gość
-        // albo sesja unieważniona po stronie serwera. To normalna odpowiedź, nie awaria.
+        // Ta gałąź wykonuje się dopiero wtedy, gdy nie powiodło się również odnowienie sesji,
+        // czyli dla gościa albo dla sesji unieważnionej po stronie serwera. To normalny stan.
         if (cancelled) return;
         setUser(null);
         setStatus('anonymous');
@@ -54,8 +54,8 @@ export function AuthProvider({ children }) {
 
   const login = useCallback(async (credentials) => {
     await loginRequest(credentials);
-    // Danych użytkownika nie ma w odpowiedzi logowania - pobieramy je stamtąd, skąd
-    // pobiera je reszta aplikacji, żeby istniała jedna ścieżka i jeden kształt danych.
+    // Odpowiedź logowania nie zawiera danych użytkownika, więc pobierane są stamtąd, skąd
+    // pobiera je reszta aplikacji - jedna ścieżka i jeden kształt danych.
     const data = await meRequest();
     setUser(data);
     setStatus('authenticated');
@@ -66,9 +66,9 @@ export function AuthProvider({ children }) {
     try {
       await logoutRequest();
     } finally {
-      // Stan czyścimy nawet gdy wywołanie padło. Sesja mogła już nie istnieć, a
-      // zostawienie użytkownika na dashboardzie po kliknięciu "Wyloguj" byłoby gorsze
-      // niż rozjechanie się z serwerem, które i tak wyjdzie przy pierwszym żądaniu.
+      // Stan czyszczony jest nawet wtedy, gdy wywołanie zawiodło: sesja mogła już nie istnieć,
+      // a pozostawienie użytkownika na pulpicie po kliknięciu wylogowania byłoby gorsze
+      // niż rozbieżność ze stanem serwera, która i tak wyjdzie przy pierwszym żądaniu.
       setUser(null);
       setStatus('anonymous');
     }

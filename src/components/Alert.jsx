@@ -1,11 +1,11 @@
 /**
  * Komunikat zwrotny z serwera.
  *
- * Pokazuje traceId, jeśli przyszedł w odpowiedzi. To wygląda na szczegół techniczny
- * wystawiony użytkownikowi bez potrzeby, ale jest odwrotnie: bez tego identyfikatora
- * zgłoszenie "wyskoczył mi błąd" jest nie do odnalezienia w logach serwera, w których
- * w tej samej sekundzie przewinęło się kilkaset linii od innych osób. Użytkownik
- * przepisuje 16 znaków, a my mamy dokładnie jego żądanie.
+ * Wyświetla identyfikator żądania, jeśli przyszedł w odpowiedzi. Wygląda to na szczegół
+ * techniczny wystawiony bez potrzeby, ale jest odwrotnie: bez niego zgłoszenie o błędzie jest
+ * nie do odnalezienia w logach serwera, przez które w tej samej sekundzie przewija się
+ * wiele wpisów od innych osób. Użytkownik przepisuje kilkanaście znaków, a obsługa ma
+ * dokładnie jego żądanie.
  */
 export default function Alert({ type = 'info', children, traceId }) {
   return (
