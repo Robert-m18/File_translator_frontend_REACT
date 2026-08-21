@@ -27,14 +27,13 @@ export default function Register() {
   }
 
   /*
-   * Po rejestracji NIE logujemy automatycznie - wcześniej ta strona próbowała i musiała
-   * kończyć się błędem. Rejestracja zwraca 202 i konto jeszcze nie istnieje: dane czekają
-   * w poczekalni po stronie serwera do chwili kliknięcia w link z maila. Nie ma więc
-   * czego zalogować.
+   * Po rejestracji nie następuje automatyczne logowanie, ponieważ konto jeszcze nie istnieje:
+   * dane czekają po stronie serwera do chwili kliknięcia w link z wiadomości, więc nie ma czego
+   * zalogować.
    *
-   * Komunikat jest celowo taki sam dla adresu wolnego i już zajętego. Serwer nie zdradza,
-   * które adresy są zarejestrowane (właściciel skrzynki dostaje wtedy mail o próbie),
-   * a front nie ma prawa tej zasady obchodzić własnym tekstem.
+   * Komunikat jest celowo taki sam dla adresu wolnego i już zajętego. Serwer nie zdradza, które
+   * adresy są zarejestrowane - właściciel skrzynki dostaje wtedy wiadomość o próbie - a front
+   * nie może tej zasady obchodzić własnym tekstem.
    */
   if (done) {
     return (
@@ -130,11 +129,11 @@ export default function Register() {
 
       {/*
         Ten sam przycisk i ten sam adres co na logowaniu - różni się wyłącznie napisem.
-        Dla Google rejestracja i logowanie to jedna operacja: konto po naszej stronie
-        powstaje przy pierwszym udanym logowaniu, a jeśli adres ma już konto założone
-        hasłem, oba zostają połączone. Konto z Google jest od razu aktywne i NIE dostaje
-        maila potwierdzającego - adres potwierdziło już Google - więc ten przycisk
-        celowo omija cały ekran "sprawdź skrzynkę" powyżej.
+        Dla dostawcy tożsamości rejestracja i logowanie są jedną operacją: konto w aplikacji
+        powstaje przy pierwszym udanym logowaniu, a jeśli adres ma już konto założone hasłem,
+        oba zostają połączone. Takie konto jest od razu aktywne i nie dostaje wiadomości
+        potwierdzającej, bo adres potwierdził już dostawca, więc ten przycisk celowo omija
+        ekran z prośbą o sprawdzenie skrzynki.
       */}
       <GoogleButton label="Zarejestruj się przez Google" />
 
@@ -143,12 +142,11 @@ export default function Register() {
           Masz już konto? <Link to="/">Zaloguj się</Link>
         </span>
         {/*
-          Informacja o przetwarzaniu danych ma trafić do człowieka W CHWILI ich zbierania,
+          Informacja o przetwarzaniu danych ma trafić do użytkownika w chwili ich zbierania,
           czyli właśnie tutaj - odnośnik w stopce logowania jest dla kogoś, kto zakłada
-          konto, już po fakcie. Piszemy "znasz zasady", a nie "wyrażasz zgodę": podstawą
-          przetwarzania jest umowa o świadczenie usługi, a nie zgoda, więc udawanie zgody
-          opisywałoby ten stan nieprawdziwie (i sugerowało, że da się ją cofnąć,
-          zostawiając konto).
+          konto, już po fakcie. Sformułowanie mówi o zapoznaniu się z zasadami, a nie o zgodzie:
+          podstawą przetwarzania jest umowa o świadczenie usługi, więc powoływanie się na zgodę
+          opisywałoby ten stan nieprawdziwie i sugerowało, że da się ją cofnąć, zachowując konto.
         */}
         <span>
           Zakładając konto, potwierdzasz, że znasz zasady przetwarzania danych opisane

@@ -20,19 +20,19 @@ const STATUS_LABEL = {
   FAILED: 'nie udało się',
 };
 
-/** Co ile odpytujemy o status. Zgrane z app.translation.poll-interval po stronie serwera. */
+/** Odstęp między odpytaniami o status - zgrany z częstotliwością pracy kolejki na serwerze. */
 const POLL_MS = 2000;
 
 /**
  * Tłumaczenie plików.
  *
- * PRZETWARZANIE JEST ASYNCHRONICZNE i to kształtuje cały ten ekran: POST zwraca 202
- * i identyfikator, a nie wynik. Plik tłumaczy worker po stronie serwera, więc lista musi
- * się sama odświeżać, dopóki cokolwiek jest w stanie PENDING/PROCESSING.
+ * Przetwarzanie jest asynchroniczne i to kształtuje cały ten ekran: wysłanie pliku zwraca
+ * identyfikator zlecenia, a nie wynik. Plik tłumaczy kolejka po stronie serwera, więc lista
+ * musi odświeżać się sama, dopóki cokolwiek jest jeszcze w toku.
  *
- * Odpytywanie ZATRZYMUJE SIĘ SAMO, gdy nie ma już czego pilnować - inaczej otwarta
- * w tle karta biłaby w API co dwie sekundy przez cały dzień. Serwer wysyła zresztą maila
- * po zakończeniu, więc użytkownik nie musi tu siedzieć i patrzeć.
+ * Odpytywanie zatrzymuje się samo, gdy nie ma już czego pilnować - inaczej karta otwarta
+ * w tle odpytywałaby API co kilka sekund przez cały dzień. Serwer wysyła zresztą wiadomość
+ * po zakończeniu, więc użytkownik nie musi czekać przy ekranie.
  */
 export default function Translations() {
   const [jobs, setJobs] = useState([]);
@@ -62,8 +62,8 @@ export default function Translations() {
     refresh();
   }, [refresh]);
 
-  // Odpytywanie tylko wtedy, gdy cokolwiek jest jeszcze w toku. quiet: true, żeby lista
-  // nie migała spinnerem co dwie sekundy.
+  // Odpytywanie działa tylko wtedy, gdy cokolwiek jest jeszcze w toku, i w trybie cichym,
+  // żeby lista nie migała wskaźnikiem ładowania przy każdym cyklu.
   useEffect(() => {
     const waiting = jobs.some((job) => PENDING_STATUSES.has(job.status));
     if (!waiting) return undefined;
@@ -93,10 +93,10 @@ export default function Translations() {
   }
 
   /**
-   * Pobiera plik przez fetch i zapisuje go z pamięci.
+   * Pobiera plik wywołaniem API i zapisuje go z pamięci.
    *
-   * Zwykły odnośnik nie zadziała: atrybut download jest ignorowany dla innego origin,
-   * więc plik otworzyłby się w karcie zamiast trafić na dysk. Szczegóły w client.js.
+   * Zwykły odnośnik nie zadziała: atrybut pobierania jest ignorowany dla innego origin,
+   * więc plik otworzyłby się w karcie zamiast trafić na dysk.
    */
   async function handleDownload(job) {
     setError(null);

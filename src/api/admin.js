@@ -2,19 +2,18 @@
  * Panel administracyjny. Mechanika (ciasteczka, CSRF, ProblemDetail, ciche odświeżanie
  * tokenu) siedzi w client.js - tutaj są już tylko wywołania.
  *
- * ŚCIEŻKA TO /users, A NIE /admin/users. Po stronie serwera reguła
- * .requestMatchers("/users/**").hasRole("ADMIN") jest tym, co chroni te endpointy;
- * front jedynie się pod nią podpina. Adres /admin/users to trasa w PRZEGLĄDARCE
- * (App.jsx) i nie ma nic wspólnego z adresem API.
+ * Endpointy stoją pod ścieżką /users, a nie /admin/users: to reguła autoryzacji po stronie
+ * serwera obejmuje właśnie ten prefiks i to ona chroni te wywołania, a front jedynie się pod
+ * nią podpina. Adres /admin/users jest trasą w przeglądarce i nie ma związku z adresem API.
  *
- * Każda akcja oddaje konto PO ZMIANIE, więc ekran podmienia jeden wiersz zamiast
+ * Każda akcja oddaje konto po zmianie, więc ekran podmienia jeden wiersz zamiast
  * przeładowywać całą listę - i nie ma okna, w którym widok pokazuje stan sprzed akcji.
  */
 import { request } from './client';
 
 export function listUsers({ q = '', page = 0, size = 20 } = {}) {
-  // encodeURIComponent, bo fragment adresu może zawierać "&", "+" albo "%" - bez tego
-  // zapytanie rozjeżdża się na parametry i serwer szuka czegoś innego, niż wpisano.
+  // Kodowanie parametru jest konieczne, bo fragment adresu może zawierać znaki o znaczeniu
+  // składniowym - bez niego zapytanie rozpada się na parametry i serwer szuka czegoś innego.
   const query = q ? `&q=${encodeURIComponent(q)}` : '';
   return request(`/users?page=${page}&size=${size}${query}`);
 }
@@ -23,7 +22,7 @@ export function getUser(id) {
   return request(`/users/${id}`);
 }
 
-/** Powód jest OBOWIĄZKOWY - serwer odrzuci pusty (400 VALIDATION_FAILED). */
+/** Powód jest obowiązkowy - serwer odrzuca żądanie z pustą wartością. */
 export function blockUser(id, reason) {
   return request(`/users/${id}/block`, { method: 'POST', body: { reason } });
 }
@@ -32,7 +31,7 @@ export function unblockUser(id) {
   return request(`/users/${id}/unblock`, { method: 'POST' });
 }
 
-/** Zdejmuje blokadę po nieudanych logowaniach. NIE zdejmuje blokady administracyjnej. */
+/** Zdejmuje blokadę po nieudanych logowaniach; nie rusza blokady administracyjnej. */
 export function unlockUser(id) {
   return request(`/users/${id}/unlock`, { method: 'POST' });
 }
@@ -43,12 +42,12 @@ export function forceLogoutUser(id) {
 }
 
 /**
- * Kasuje konto razem z sesjami, zleceniami tłumaczenia i plikami. NIEODWRACALNE.
+ * Kasuje konto razem z sesjami, zleceniami tłumaczenia i plikami. Operacja nieodwracalna.
  *
- * Jedyna akcja panelu, która NIE oddaje konta po zmianie - po skasowaniu nie ma czego
- * pokazać, więc serwer odpowiada 204 bez ciała, a ekran usuwa wiersz zamiast go podmieniać.
- * Pytanie "czy na pewno" stoi w AdminUsers.jsx: to sprawa interfejsu, a nie API, bo żaden
- * dodatkowy krok po stronie serwera nie powstrzyma kogoś, kto woła to curlem.
+ * Jedyna akcja panelu, która nie oddaje konta po zmianie: po skasowaniu nie ma czego
+ * pokazać, więc odpowiedź nie ma ciała, a ekran usuwa wiersz zamiast go podmieniać.
+ * Pytanie o potwierdzenie należy do interfejsu, a nie do API: żaden dodatkowy krok po stronie
+ * serwera nie powstrzyma kogoś, kto woła ten endpoint bezpośrednio.
  */
 export function deleteUser(id) {
   return request(`/users/${id}`, { method: 'DELETE' });

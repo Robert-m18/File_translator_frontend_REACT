@@ -18,9 +18,9 @@ export default function Dashboard() {
     setLoggingOut(true);
     setError(null);
     try {
-      // Wywołanie serwera jest tu konieczne, a nie opcjonalne: unieważnia rodzinę tokenów
-      // odświeżających. Samo skasowanie ciasteczek zostawiłoby przechwyconą kopię tokenu
-      // działającą przez 7 dni.
+      // Wywołanie serwera jest konieczne, a nie opcjonalne: unieważnia rodzinę tokenów
+      // odnawiających. Samo skasowanie ciasteczek zostawiłoby przechwyconą kopię tokenu
+      // działającą przez cały tydzień.
       await logout();
       navigate('/', { replace: true });
     } catch (err) {
@@ -73,10 +73,10 @@ export default function Dashboard() {
       </div>
 
       {/*
-        Kafelek panelu widoczny wyłącznie dla administratora. Źródłem prawdy jest to samo
-        user.role co odznaka w nagłówku karty - jedno zapytanie /auth/me, jedna odpowiedź,
-        żadnej flagi trzymanej obok. Ukrycie kafelka jest wygodą, nie zabezpieczeniem:
-        endpointów pilnuje reguła hasRole("ADMIN") po stronie serwera.
+        Kafelek panelu widoczny wyłącznie dla administratora. Źródłem prawdy jest ta sama
+        rola co przy odznace w nagłówku karty - jedno zapytanie o sesję, jedna odpowiedź,
+        bez dodatkowej flagi trzymanej obok. Ukrycie kafelka jest wygodą, nie zabezpieczeniem:
+        endpointów pilnuje reguła autoryzacji po stronie serwera.
       */}
       {user?.role === 'ADMIN' && (
         <div className="cta">
@@ -104,9 +104,9 @@ export default function Dashboard() {
       </button>
 
       {/*
-        Stopka z polityką także za logowaniem, nie tylko na ekranach wejściowych: to tutaj
-        jest napisane, jak usunąć konto, a szuka się tego dopiero wtedy, gdy konto się już
-        ma - czyli nigdy na ekranie logowania.
+        Stopka z polityką także za logowaniem, a nie tylko na ekranach wejściowych: to w niej
+        opisane jest usuwanie konta, a szuka się tego dopiero wtedy, gdy konto się już ma,
+        czyli nigdy na ekranie logowania.
       */}
       <footer className="card-foot">
         <Link to="/privacy">Polityka prywatności i usunięcie konta</Link>

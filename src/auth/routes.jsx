@@ -1,7 +1,7 @@
 /**
  * Strażnicy tras.
  *
- * To jest wygoda dla użytkownika, a NIE zabezpieczenie - front da się obejść zawsze.
+ * Strażnicy są wygodą dla użytkownika, a nie zabezpieczeniem - front da się obejść zawsze.
  * Prawdziwą ochroną jest reguła autoryzacji po stronie serwera; tutaj chodzi tylko o to,
  * żeby nie pokazywać dashboardu komuś, kto i tak zobaczy na nim same błędy 401.
  */
@@ -14,12 +14,12 @@ export function RequireAuth({ children }) {
   const { status } = useAuth();
   const location = useLocation();
 
-  // Dopóki nie znamy odpowiedzi z /auth/me, nie wolno przekierować - inaczej każde F5
-  // na dashboardzie wyrzucałoby na logowanie, mimo ważnej sesji.
+  // Do czasu poznania odpowiedzi o stanie sesji nie wolno przekierowywać - inaczej każde
+  // odświeżenie pulpitu wyrzucałoby na logowanie mimo ważnej sesji.
   if (status === 'loading') return <Spinner label="Sprawdzanie sesji…" />;
 
   if (status !== 'authenticated') {
-    // Zapamiętujemy, dokąd użytkownik zmierzał, żeby po zalogowaniu tam wrócić.
+    // Zapamiętany cel nawigacji pozwala wrócić tam po zalogowaniu.
     return <Navigate to="/" replace state={{ from: location.pathname }} />;
   }
 
@@ -29,12 +29,12 @@ export function RequireAuth({ children }) {
 /**
  * Trasa tylko dla administratora.
  *
- * Gałąź status === 'loading' jest OBOWIĄZKOWA i to nie z powodów estetycznych: dopóki
- * /auth/me nie odpowie, user jest null, więc user?.role !== 'ADMIN' i każde F5 na panelu
- * wyrzucałoby administratora na dashboard. Ten sam błąd co przy RequireAuth, tylko
- * objawiający się wyłącznie po odświeżeniu strony - czyli trudniejszy do zauważenia.
+ * Gałąź stanu ładowania jest konieczna, i to nie z powodów estetycznych: dopóki serwer nie
+ * odpowie, dane użytkownika są puste, więc warunek roli nie jest spełniony i każde odświeżenie
+ * panelu wyrzucałoby administratora na pulpit. Ten sam błąd co przy strażniku zalogowania,
+ * tyle że objawiający się wyłącznie po odświeżeniu strony, czyli trudniejszy do zauważenia.
  *
- * Przekierowanie na /dashboard, a nie na logowanie: zalogowany użytkownik bez roli jest
+ * Przekierowanie prowadzi na pulpit, a nie na logowanie: zalogowany użytkownik bez roli jest
  * zalogowany poprawnie, brakuje mu tylko uprawnień. Ekran logowania sugerowałby, że sesja
  * padła, i wysłał go w podróż po własnym haśle.
  */

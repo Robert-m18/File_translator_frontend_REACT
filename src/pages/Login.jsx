@@ -8,25 +8,23 @@ import GoogleButton from '../components/GoogleButton';
 
 export default function Login() {
   /*
-   * ?confirmed=1 ustawia ConfirmEmail po udanym potwierdzeniu adresu. Nośnikiem jest ADRES,
-   * a nie stan routera ani localStorage: stan ginie przy odświeżeniu, a to właśnie
-   * odświeżenie było tu pierwotnym problemem - dopóki token siedział w adresie strony
-   * potwierdzenia, F5 wysyłało go drugi raz i użytkownik po udanym potwierdzeniu widział
-   * błąd o nieprawidłowym linku.
+   * Parametr sukcesu ustawia strona potwierdzenia adresu. Nośnikiem jest adres, a nie stan
+   * routera ani pamięć przeglądarki: stan ginie przy odświeżeniu, a to właśnie odświeżenie
+   * jest tu sytuacją, którą trzeba obsłużyć, bo token potwierdzenia jest jednorazowy.
    */
   const [searchParams] = useSearchParams();
   const justConfirmed = searchParams.get('confirmed') === '1';
 
   /*
-   * ?error=KOD ustawia BACKEND, przekierowując tu po nieudanym logowaniu przez Google.
+   * Parametr błędu ustawia serwer, przekierowując tutaj po nieudanym logowaniu przez Google.
    * Nośnikiem jest adres z tego samego powodu co wyżej, plus jednego dodatkowego:
-   * przeglądarka wraca tu z accounts.google.com zwykłą NAWIGACJĄ, więc nie ma żadnego
-   * wywołania fetch, którego wynik dałoby się złapać w kodzie - a stan routera nie
+   * przeglądarka wraca tu od dostawcy tożsamości zwykłą nawigacją, więc nie ma żadnego
+   * wywołania API, którego wynik dałoby się przechwycić w kodzie, a stan routera nie
    * przetrwałby przejścia przez obcą domenę.
    *
-   * Ekran logowania jest tu adresem powrotnym dla porażki, bo /login jako trasa NIE
-   * ISTNIEJE - logowanie stoi pod "/". Wskazanie nieistniejącej ścieżki wpadłoby
-   * w <Route path="*">, a tamtejsze przekierowanie NIE PRZENOSI query stringa, więc kod
+   * Ekran logowania jest adresem powrotnym dla niepowodzenia, ponieważ osobna trasa /login
+   * nie istnieje - logowanie stoi pod adresem głównym. Wskazanie nieistniejącej ścieżki
+   * trafiłoby na trasę zapasową, której przekierowanie nie przenosi parametrów, więc kod
    * błędu przepadłby po drodze i użytkownik dostałby czysty ekran logowania bez słowa
    * wyjaśnienia. Ta zależność jest obustronna: zmiana trasy logowania wymaga zmiany
    * app.oauth2.failure-path po stronie serwera.
@@ -46,8 +44,8 @@ export default function Login() {
   function validate() {
     const e = {};
     if (!validateEmail(email)) e.email = 'Niepoprawny adres e-mail';
-    // Na logowaniu NIE sprawdzamy polityki hasła. Konto założone przed jej zaostrzeniem
-    // dalej ma prawo się zalogować, a odsianie go tutaj byłoby błędem po naszej stronie.
+    // Na logowaniu polityka hasła nie jest sprawdzana: konto założone przed jej zaostrzeniem
+    // nadal ma prawo się zalogować, a odsianie go tutaj byłoby błędem aplikacji.
     if (!password) e.password = 'Podaj hasło';
     setErrors(e);
     return Object.keys(e).length === 0;
@@ -83,9 +81,9 @@ export default function Login() {
       )}
 
       {/*
-        Odmowa z Google idzie NAD formularzem, a nie pod nim jak serverError: użytkownik
-        wraca tu z obcej domeny i musi zobaczyć powód od razu, zanim zacznie szukać
-        winy we własnym haśle.
+        Odmowa logowania zewnętrznego wyświetla się nad formularzem, a nie pod nim jak błąd
+        logowania hasłem: użytkownik wraca tu z obcej domeny i musi zobaczyć powód od razu,
+        zanim zacznie szukać winy we własnym haśle.
       */}
       {googleError && <Alert type="error">{googleError}</Alert>}
 

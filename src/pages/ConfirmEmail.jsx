@@ -7,22 +7,22 @@ import Spinner from '../components/Spinner';
 /**
  * Strona pod linkiem z maila potwierdzającego.
  *
- * Ścieżka MUSI brzmieć /confirm-email - taki adres skleja serwer (EmailService:
- * frontendUrl + "/confirm-email?token=..."). Wcześniej ten komponent istniał, ale nie był
- * podpięty do żadnej trasy, więc link z maila prowadził na pustą stronę.
+ * Ścieżka musi brzmieć dokładnie tak, jak adres sklejany przez serwer w treści wiadomości,
+ * inaczej link z maila prowadzi na pustą stronę.
+
  *
- * PO SUKCESIE PRZECHODZIMY NA LOGOWANIE, zamiast zostawać tutaj z komunikatem. Token jest
- * JEDNORAZOWY, więc dopóki siedział w adresie, każde F5 wysyłało go ponownie i serwer -
- * słusznie - nie znajdował już takiego zgłoszenia. Użytkownik dostawał czerwony ekran
- * bezpośrednio po udanym potwierdzeniu, co czyta się jak awaria. Serwer nie może tego
- * naprawić po swojej stronie, bo zużyty token jest dla niego nieodróżnialny od zmyślonego;
- * wie o tym tylko ta strona, i to jedynie do momentu odświeżenia. Dlatego zamiast poprawiać
- * komunikat, usuwamy powód jego pokazywania: po sukcesie w historii nie ma już adresu
- * z tokenem, więc nie ma czego wysłać drugi raz.
+ * Po udanym potwierdzeniu strona przechodzi na ekran logowania, zamiast zostawać z komunikatem.
+ * Token jest jednorazowy, więc dopóki znajduje się w adresie, każde odświeżenie wysyła go
+ * ponownie, a serwer - słusznie - nie znajduje już takiego zgłoszenia. Użytkownik zobaczyłby
+ * wtedy komunikat o błędzie zaraz po udanym potwierdzeniu, co czyta się jak awaria. Serwer nie
+ * może tego naprawić, bo zużyty token jest dla niego nieodróżnialny od zmyślonego; wie o tym
+ * wyłącznie ta strona, i to jedynie do chwili odświeżenia. Zamiast poprawiać komunikat,
+ * usunięty zostaje powód jego pokazywania: po sukcesie w historii nie ma już adresu z tokenem.
+
  *
- * replace: true, a nie push - inaczej "wstecz" wracałoby na zużyty link i objaw wracałby
- * razem z nim. Informacja o sukcesie jedzie w adresie (?confirmed=1), a nie w stanie
- * routera, właśnie po to, żeby przetrwała odświeżenie strony logowania.
+ * Wpis w historii jest zastępowany, a nie dokładany - inaczej przycisk wstecz wracałby na
+ * zużyty link i objaw wracałby razem z nim. Informacja o sukcesie jedzie w adresie, a nie
+ * w stanie routera, właśnie po to, żeby przetrwała odświeżenie strony logowania.
  */
 export default function ConfirmEmail() {
   const [searchParams] = useSearchParams();

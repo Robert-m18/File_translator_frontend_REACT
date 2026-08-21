@@ -1,30 +1,29 @@
 /*
  * Motyw: czerwono-szary.
  *
- * PODZIAŁ RÓL JEST TU CAŁĄ DECYZJĄ, a nie kwestią gustu: SZAROŚĆ NIESIE POWIERZCHNIE
- * (tła, obramowania, tekst), CZERWIEŃ WYŁĄCZNIE AKCJE (przyciski, odnośniki, pierścień
- * focusu, spinner). Poprzedni motyw fioletowy mógł tintować powierzchnie swoim kolorem
- * bezkarnie, bo fiolet nie znaczył nic poza "to nasza marka".
+ * Podział ról między kolorami jest tu decyzją projektową, a nie kwestią gustu: szarość niesie
+ * powierzchnie (tła, obramowania, tekst), a czerwień wyłącznie działania - przyciski, odnośniki,
+ * pierścień focusu i wskaźnik ładowania.
  *
- * Czerwień znaczy. W tej aplikacji czerwony jest już kolorem BŁĘDU - komunikat o awarii,
- * status "nie udało się", pole z błędem walidacji. Gdyby powierzchnie też były różowawe,
- * blada karta i blady komunikat o błędzie zlałyby się w jedno i użytkownik przestałby
- * odróżniać "tak wygląda ta aplikacja" od "coś poszło nie tak".
+ * Wynika to z tego, że czerwony jest w tej aplikacji również kolorem błędu: komunikatu o awarii,
+ * statusu nieudanego zlecenia i pola z błędem walidacji. Gdyby powierzchnie także były
+ * zabarwione na czerwono, blada karta i blady komunikat o błędzie zlałyby się w jedno,
+ * a użytkownik przestałby odróżniać zwykły wygląd aplikacji od sygnału, że coś poszło nie tak.
  *
- * Stąd reguła, którą trzeba utrzymać przy każdym nowym elemencie:
+ * Stąd reguła obowiązująca przy każdym nowym elemencie:
  *
- *   CZERWONE TŁO POWIERZCHNI  = coś poszło nie tak (--danger-bg i tylko ono)
- *   CZERWONY WYPEŁNIONY BLOK  = działanie do kliknięcia (.button)
- *   CZERWONY TEKST            = odnośnik albo błąd, rozróżniane przez kontekst
- *   SZARE TŁO                 = zwykła powierzchnia, nie niesie żadnego znaczenia
+ *   czerwone tło powierzchni  - wyłącznie sygnał błędu
+ *   czerwony wypełniony blok  - działanie do kliknięcia
+ *   czerwony tekst            - odnośnik albo błąd, rozróżniane przez kontekst
+ *   szare tło                 - zwykła powierzchnia, bez dodatkowego znaczenia
  *
- * Dlatego .cta, .badge, .button-ghost i pola formularza są SZARE, mimo że we wcześniejszej
- * wersji były tintowane kolorem marki. Jedyną różową powierzchnią w całej aplikacji
- * zostaje komunikat o błędzie - i właśnie dzięki temu rzuca się w oczy.
+ * Dlatego kafelki, odznaki, przyciski drugorzędne i pola formularzy są szare. Jedyną czerwonawą
+ * powierzchnią w całej aplikacji pozostaje komunikat o błędzie i właśnie dzięki temu rzuca się
+ * w oczy.
  *
- * Statusy zleceń zostają zielono-czerwone, bo tam kolor niesie treść. "W kolejce"
- * i "tłumaczę" są SZARE świadomie: czerwony badge przy zleceniu, które jest po prostu
- * w toku, czytałoby się jak niepowodzenie.
+ * Statusy zleceń są zielono-czerwone, bo tam kolor niesie treść. Statusy pośrednie pozostają
+ * szare świadomie: czerwona odznaka przy zleceniu, które jest po prostu w toku, czytałaby się
+ * jak niepowodzenie.
  */
 
 :root {
@@ -50,17 +49,17 @@
   --surface: #ffffff;
   --border: #e3e0e0;
 
-  /* Czerwień BŁĘDU jest ciemniejsza i chłodniejsza od czerwieni marki - nie po to,
+  /* Czerwień błędu jest ciemniejsza i chłodniejsza od czerwieni marki - nie po to,
      żeby dało się je rozróżnić z pamięci (nie da się), tylko żeby tekst błędu na różowym
      tle miał wyraźnie wyższy kontrast niż odnośnik. Odróżnia je jednak przede wszystkim
-     KSZTAŁT: błąd to blok z tłem, akcja to wypełniony przycisk albo tekst w zdaniu. */
+     kształt: błąd to blok z tłem, a działanie to wypełniony przycisk albo tekst w zdaniu. */
   --danger: #9b1c14;
   --danger-bg: #fdf1f0;
   --danger-border: #f3c4bf;
   --success: #17734b;
   --success-bg: #f0faf5;
   --success-border: #b8e5cd;
-  /* Informacja jest NEUTRALNA - szara, nie w kolorze marki. Tintowana na czerwono
+  /* Informacja jest neutralna - szara, nie w kolorze marki. Zabarwiona na czerwono
      wyglądałaby jak ostrzeżenie, którym nie jest. */
   --info-bg: var(--grey-100);
   --info-border: var(--grey-200);
@@ -230,18 +229,18 @@ a:hover {
 /*
  * Pola autouzupełnione przez przeglądarkę.
  *
- * Chrome maluje je WŁASNYM błękitem i background-color tego NIE nadpisze - przeglądarka
- * wymusza swoją wartość ponad arkuszem strony. Jedyne, co działa, to zalanie pola cieniem
- * wewnętrznym większym niż ono samo; stąd ta pozornie absurdalna wartość 1000px.
+ * Przeglądarki malują je własnym kolorem tła, którego zwykła właściwość tła nie nadpisze -
+ * wartość przeglądarki ma pierwszeństwo przed arkuszem strony. Działa jedynie zalanie pola
+ * cieniem wewnętrznym większym niż ono samo, stąd pozornie absurdalna wartość promienia.
  *
- * Bez tego motyw rozjeżdża się dokładnie tam, gdzie użytkownik patrzy najpierw: ekran
- * logowania z zapamiętanym hasłem miał dwa niebieskie prostokąty pośrodku czerwono-szarej
- * karty. Nie widać tego przy pierwszym uruchomieniu ani w trybie incognito - dopiero
- * u kogoś, kto raz się zalogował.
+ * Bez tego motyw rozjeżdża się dokładnie tam, gdzie użytkownik patrzy najpierw: ekran logowania
+ * z zapamiętanym hasłem pokazuje dwa niebieskie prostokąty pośrodku czerwono-szarej karty.
+ * Efektu nie widać przy pierwszym uruchomieniu ani w oknie prywatnym, tylko u kogoś, kto raz
+ * się zalogował.
  *
- * Wariant :focus musi POWTÓRZYĆ pierścień focusu, bo box-shadow nie sumuje się między
- * regułami - podanie samego wypełnienia skasowałoby obramowanie, czyli zabrało osobie
- * poruszającej się tabem jedyną informację o tym, gdzie jest.
+ * Wariant dla pola z focusem musi powtórzyć pierścień focusu, ponieważ cienie nie sumują się
+ * między regułami - podanie samego wypełnienia skasowałoby obramowanie, czyli zabrało osobie
+ * poruszającej się klawiaturą jedyną informację o tym, gdzie się znajduje.
  */
 .input:-webkit-autofill,
 .input:-webkit-autofill:hover {
@@ -325,13 +324,13 @@ a:hover {
  *
  * Biały z szarą obwódką, a nie czerwony jak reszta — celowo. Wytyczne Google dopuszczają
  * dla przycisku z ich znakiem biały albo neutralny podkład, a znak ma zostać czterokolorowy;
- * położenie go na naszej czerwieni łamie i jedno, i drugie — a przy TEJ palecie doszedł
- * drugi powód: czterokolorowy znak Google niesie własną czerwień, która na naszej czerwieni
- * po prostu ginie. Praktyczny zysk jest ten sam:
- * przycisk logowania hasłem zostaje jedynym wyróżnionym elementem, więc dwa równorzędne
- * "wołania do działania" nie konkurują ze sobą wzrokowo.
+ * położenie go na czerwieni tej aplikacji łamie i jedno, i drugie, a przy tej palecie dochodzi
+ * drugi powód: czterokolorowy znak niesie własną czerwień, która na czerwonym tle
+ * po prostu ginie. Praktyczny zysk jest przy tym ten sam:
+ * przycisk logowania hasłem zostaje jedynym wyróżnionym elementem, więc dwa
+ * równorzędne wezwania do działania nie konkurują ze sobą wzrokowo.
  *
- * gap: 10px zamiast marginesu na znaku — inaczej odstęp znika przy zawinięciu napisu.
+ * Odstęp realizuje właściwość odstępu między elementami, a nie margines znaku - inaczej
  */
 .button-google {
   gap: 10px;
@@ -361,9 +360,9 @@ a:hover {
 /*
  * Rozdzielacz "albo" między formularzem a logowaniem przez Google.
  *
- * Kreski rysują pseudoelementy, więc w drzewie dostępności zostaje samo słowo — obrazek
- * z linii nie ma czego przeczytać czytnikowi ekranu, a dwa <hr> wokół tekstu ogłaszałyby
- * dwie zmiany sekcji tam, gdzie żadnej nie ma.
+ * Kreski rysują pseudoelementy, więc w drzewie dostępności zostaje samo słowo: obrazek
+ * złożony z linii nie niesie treści dla czytnika ekranu, a dwie linie poziome wokół tekstu
+ * ogłaszałyby dwie zmiany sekcji tam, gdzie żadnej nie ma.
  */
 .divider {
   display: flex;
@@ -468,7 +467,7 @@ a:hover {
 /*
  * Karta z długim tekstem, a nie z formularzem. Reszta aplikacji składa się z krótkich
  * bloków, więc .card ustawia im gap: 18px i tyle wystarcza - tutaj trzeba odróżnić odstęp
- * MIĘDZY sekcjami od odstępu wewnątrz sekcji, inaczej nagłówek przykleja się do akapitu
+ * między sekcjami od odstępu wewnątrz sekcji, inaczej nagłówek przykleja się do akapitu
  * poprzedniej sekcji tak samo jak do własnej i cały tekst czyta się jak jedna ściana.
  *
  * max-width na akapitach nie jest potrzebny: karta ma 760px, czyli mniej więcej tyle, ile
@@ -554,10 +553,10 @@ a:hover {
 }
 
 /*
- * Akapit, który ma być zauważony przy przewijaniu (ostrzeżenie o darmowym planie DeepL).
- * Szare tło z czerwoną krawędzią z boku, a NIE --danger-bg: różowa powierzchnia znaczy
- * w tym motywie "coś poszło nie tak" i zostaje komunikatom o błędzie. Tu nic się nie
- * zepsuło - to informacja, którą trzeba przeczytać przed wgraniem pliku.
+ * Akapit, który ma zostać zauważony przy przewijaniu - używany do ostrzeżeń w treści.
+ * Szare tło z czerwoną krawędzią z boku, a nie tło komunikatu o błędzie: czerwona
+ * powierzchnia sygnalizuje w tym motywie awarię, a tutaj nic się nie zepsuło - jest to
+ * informacja, którą warto przeczytać przed wykonaniem operacji.
  */
 .callout {
   padding: 14px 16px;
@@ -664,7 +663,7 @@ a:hover {
 }
 
 /*
- * Formularz rozwijany WEWNĄTRZ wiersza (powód blokady w panelu administracyjnym).
+ * Formularz rozwijany wewnątrz wiersza - powód blokady w panelu administracyjnym.
  * flex-basis: 100% zrzuca go do własnej linii - bez tego wciskałby się obok przycisków
  * i wiersz rozjeżdżałby się w poziomie. Stąd flex-wrap na .job wyżej; dla listy zleceń
  * nic to nie zmienia, bo tam nie ma czego zawijać.
@@ -678,10 +677,10 @@ a:hover {
  * Potwierdzenie usunięcia konta - rozwijane w wierszu, tak samo jak formularz powodu
  * blokady, i z tym samym flex-basis: 100%, bo inaczej wciska się obok przycisków.
  *
- * TŁO JEST SZARE, NIE RÓŻOWE, i to jest decyzja zgodna z regułą z nagłówka tego pliku:
- * --danger-bg znaczy "coś poszło nie tak" i zostaje wyłącznie komunikatom o błędzie.
- * Tutaj nic się nie zepsuło - to pytanie zadane zanim cokolwiek się wydarzy. Powagę
- * niesie czerwony NAPIS (.confirm-warning) i czerwony przycisk potwierdzenia, czyli
+ * Tło jest szare, a nie czerwonawe, zgodnie z regułą z nagłówka tego pliku: czerwona
+ * powierzchnia sygnalizuje błąd i zostaje zarezerwowana dla komunikatów o błędzie.
+ * Tutaj nic się nie zepsuło - jest to pytanie zadane, zanim cokolwiek się wydarzy. Powagę
+ * niesie czerwony napis ostrzeżenia i czerwony przycisk potwierdzenia, czyli
  * dokładnie te dwa nośniki, które w tym motywie znaczą "uwaga" i "działanie".
  */
 .job-confirm {
@@ -705,20 +704,20 @@ a:hover {
 }
 
 /*
- * PODSTAWA 240px, A NIE 0 - i to jest cały ten przepis.
+ * Podstawa szerokości wynosi 240px, a nie zero, i to jest sedno tej reguły.
  *
- * Przy flex: 1 (czyli flex-basis: 0) kolumna z adresem nigdy nie ma własnego rozmiaru,
- * więc flex-wrap na .job NIE MA CZEGO ZAWINĄĆ: wiersz zawsze się mieści, bo .job-main
- * kurczy się dowolnie daleko. Sąsiedzi mają flex-shrink: 0, więc cały deficyt spada na
- * nią jedną. Widać to dopiero przy CZWARTYM przycisku (konto z blokadą logowania dostaje
- * "Zdejmij blokadę logowania"): adres schodzi do "dem...", a opis łamie się po jednym
- * słowie na linię. Wiersze obok, z trzema przyciskami, wyglądają normalnie - dlatego
- * objaw wygląda na problem z tym jednym kontem, a nie z regułą układu.
+ * Przy podstawie zerowej kolumna z adresem nigdy nie ma własnego rozmiaru, więc zawijanie
+ * w wierszu nie ma czego przenieść: wiersz zawsze się mieści, bo ta kolumna kurczy się
+ * dowolnie daleko, a sąsiednie bloki nie kurczą się wcale, więc cały deficyt spada na nią
+ * jedną. Widać to dopiero przy czwartym przycisku w wierszu: adres skraca się do kilku
+ * znaków, a opis łamie się po jednym słowie na linię. Sąsiednie wiersze z trzema
+ * przyciskami wyglądają normalnie, więc objaw sprawia wrażenie problemu z jednym kontem,
+ * a nie z regułą układu.
  *
  * Z podstawą 240px zawijanie liczy się od realnego rozmiaru: gdy przyciski przestają się
- * mieścić, .job-actions schodzi do własnej linii i wiersz ROŚNIE W PIONIE, zamiast
- * zgniatać tożsamość konta. min-width: 0 zostaje, bo to ono pozwala .job-name skrócić
- * długą nazwę wielokropkiem, gdy miejsca jest mniej niż 240px.
+ * mieścić, blok przycisków schodzi do własnej linii i wiersz rośnie w pionie, zamiast
+ * zgniatać dane konta. Zerowa szerokość minimalna zostaje, bo pozwala skrócić długą nazwę
+ * wielokropkiem, gdy miejsca jest mniej niż podstawa.
  */
 .job-main {
   display: flex;
@@ -741,15 +740,13 @@ a:hover {
 }
 
 /*
- * flex-wrap DOŁOŻONY RAZEM Z PIĄTYM PRZYCISKIEM ("Usuń") i to nie jest kosmetyka.
+ * Zawijanie wewnątrz bloku przycisków jest konieczne przy pięciu akcjach w wierszu.
  *
- * Sam .job z flex-wrap zrzuca .job-actions do własnej linii, gdy przyciski przestają się
- * mieścić OBOK adresu - ale nie ma jak zawinąć ich MIĘDZY SOBĄ. Przy pięciu przyciskach
- * (konto z blokadą logowania: Zablokuj, Zdejmij blokadę logowania, Wymuś wylogowanie,
- * Usuń) sam ten blok bywa szerszy niż karta, więc bez tej linii wystawał poza jej krawędź
- * i karta zaczynała się przewijać w poziomie. Objaw wyglądałby jak wina jednego wiersza,
- * bo wiersze z trzema przyciskami mieszczą się bez zarzutu - dokładnie ta sama pułapka,
- * którą opisuje komentarz przy .job-main.
+ * Zawijanie ustawione na samym wierszu zrzuca blok przycisków do własnej linii, gdy przestają
+ * mieścić się obok adresu, ale nie pozwala zawinąć ich względem siebie. Przy pięciu przyciskach
+ * blok bywa szerszy niż karta, więc bez tej reguły wystaje poza jej krawędź, a karta zaczyna
+ * przewijać się w poziomie. Objaw sprawia wrażenie problemu z jednym wierszem, bo wiersze
+ * z mniejszą liczbą przycisków mieszczą się bez zarzutu.
  */
 .job-actions {
   display: flex;

@@ -5,8 +5,8 @@
 import { request, upload, downloadFile } from './client';
 
 /**
- * Zleca tłumaczenie. Zwraca 202 i zlecenie w stanie PENDING - plik NIE jest jeszcze
- * przetłumaczony. Robi to worker po stronie serwera, więc trzeba odpytywać o status.
+ * Zleca tłumaczenie. Zwraca zlecenie w stanie oczekującym - plik nie jest jeszcze
+ * przetłumaczony, bo wykonuje to kolejka po stronie serwera, więc trzeba odpytywać o status.
  *
  * Nazwy pól multiparta ("file", "targetLang") są kontraktem z kontrolerem - literówka
  * kończy się błędem walidacji, który wygląda jak problem z samym plikiem.
@@ -18,7 +18,7 @@ export function submitTranslation({ file, targetLang }) {
   return upload('/translations', form);
 }
 
-/** Lista WŁASNYCH zleceń. Serwer filtruje po właścicielu - front niczego tu nie ukrywa. */
+/** Lista własnych zleceń. Filtrowanie po właścicielu wykonuje serwer, nie front. */
 export function listTranslations({ page = 0, size = 20 } = {}) {
   return request(`/translations?page=${page}&size=${size}`);
 }
@@ -60,10 +60,9 @@ export const PENDING_STATUSES = new Set(['PENDING', 'PROCESSING']);
 
 /**
  * Obsługiwane formaty i ich limity - muszą zgadzać się z wyliczeniem FileType po stronie
- * serwera, bo to on je egzekwuje. Tutaj są WYŁĄCZNIE po to, żeby powiedzieć użytkownikowi,
- * czego się spodziewać, zanim wyśle plik; sprawdzenie w przeglądarce niczego nie zabezpiecza.
- *
- * Limity są RÓŻNE dla tekstu i dla dokumentów, i to nie jest niedoróbka: dla .txt bajty to
+ * serwera, ponieważ to on je egzekwuje. Tutaj służą wyłącznie temu, żeby powiedzieć
+ * użytkownikowi, czego się spodziewać, zanim wyśle plik - sprawdzenie w przeglądarce niczego
+ * nie zabezpiecza. Limity różnią się między tekstem a dokumentami: dla pliku tekstowego bajty to
  * praktycznie znaki, więc limit wynika z budżetu znaków u dostawcy; dla dokumentów liczby
  * znaków nie da się poznać przed wysłaniem, więc limit bajtowy ogranicza szkodę z jednego pliku.
  *
@@ -80,11 +79,10 @@ export const SUPPORTED_FORMATS = [
 /**
  * Wartość atrybutu accept dla pola wyboru pliku.
  *
- * WYPROWADZANA z listy powyżej, a nie zapisana drugi raz z ręki. Wcześniej był tu osobny
- * łańcuch '.txt,.pdf,.xlsx' - czyli dwa źródła prawdy o tym samym zbiorze, które przy
- * dokładaniu formatu rozjeżdżają się w sposób wyjątkowo trudny do zauważenia: podpowiedź
- * pod polem wymienia format, a okno wyboru pliku go ODFILTROWUJE, więc użytkownik widzi
- * "obsługujemy .docx" i nie może takiego pliku wskazać. Żaden błąd nigdzie nie pada,
- * bo żądanie w ogóle nie powstaje.
+ * Wartość wyprowadzana jest z listy powyżej, a nie zapisana drugi raz ręcznie. Dwa źródła
+ * prawdy o tym samym zbiorze rozjeżdżają się przy dokładaniu formatu w sposób wyjątkowo
+ * trudny do zauważenia: podpowiedź pod polem wymienia format, a okno wyboru pliku go
+ * odfiltrowuje, więc użytkownik czyta, że format jest obsługiwany, i nie może takiego pliku
+ * wskazać. Żaden błąd przy tym nie powstaje, bo żądanie w ogóle nie zostaje wysłane.
  */
 export const ACCEPTED_FILE_TYPES = SUPPORTED_FORMATS.map((format) => format.extension).join(',');

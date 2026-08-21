@@ -3,17 +3,17 @@ import { googleLoginUrl } from '../auth/google';
 /**
  * Przycisk "przez Google".
  *
- * ZWYKŁY <a>, A NIE <button onClick={fetch(...)}>. Przepływ OAuth2 zaczyna się
- * przekierowaniem na accounts.google.com, więc przeglądarka musi tam NAWIGOWAĆ —
- * uzasadnienie i objawy pomyłki opisuje auth/google.js. Odnośnik daje przy okazji
- * to, czego przycisk by nie dał: podgląd adresu na pasku stanu, otwarcie w nowej
- * karcie środkowym przyciskiem i działanie przy wyłączonym JavaScripcie.
+ * Element jest odnośnikiem, a nie przyciskiem wywołującym żądanie. Przepływ OAuth2 zaczyna się
+ * przekierowaniem na stronę dostawcy tożsamości, więc przeglądarka musi tam nawigować.
+ * Odnośnik daje przy okazji to, czego przycisk by nie dał: podgląd adresu na pasku stanu,
+ * otwarcie w nowej karcie środkowym przyciskiem myszy i działanie przy wyłączonym JavaScripcie.
+
  *
- * Rejestracja i logowanie to dla Google JEDNA I TA SAMA operacja — konto po naszej
- * stronie powstaje przy pierwszym udanym logowaniu (a jeśli adres ma już konto założone
- * hasłem, oba zostają połączone). Dlatego różni się wyłącznie NAPIS, a nie adres ani
- * zachowanie; obiecywanie "rejestracji" osobnym przyciskiem sugerowałoby dwa różne
- * przepływy tam, gdzie jest jeden.
+ * Rejestracja i logowanie są u dostawcy tą samą operacją: konto po stronie aplikacji
+ * powstaje przy pierwszym udanym logowaniu, a jeśli adres ma już konto założone hasłem,
+ * oba zostają połączone. Dlatego różni się wyłącznie napis, a nie adres ani zachowanie;
+ * osobny przycisk rejestracji sugerowałby dwa różne przepływy tam, gdzie jest jeden.
+
  */
 export default function GoogleButton({ label = 'Zaloguj się przez Google' }) {
   return (
@@ -29,8 +29,8 @@ export default function GoogleButton({ label = 'Zaloguj się przez Google' }) {
  *
  * Wersja z CDN-u wymagałaby połączenia z obcym hostem przy każdym wejściu na ekran
  * logowania i pokazywała pustą ramkę, gdyby ten host nie odpowiedział. Cztery kolory
- * są częścią znaku i nie wolno ich zamieniać na jednolity — tak samo jak nie wolno
- * go przerysowywać ani zmieniać proporcji.
+ * są częścią znaku i nie wolno zastępować ich jednolitym kolorem ani zmieniać proporcji.
+
  *
  * aria-hidden, bo znaczenie niesie napis obok; czytnik ekranu przeczytałby inaczej
  * to samo dwa razy.
