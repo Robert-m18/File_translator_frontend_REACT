@@ -134,6 +134,7 @@ export default function Login() {
         <span>
           Nie masz konta? <Link to="/register">Zarejestruj się</Link>
         </span>
+        <Link to="/privacy">Polityka prywatności</Link>
       </footer>
     </div>
   );

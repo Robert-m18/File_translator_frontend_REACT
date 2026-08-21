@@ -7,6 +7,7 @@ import ConfirmEmail from './pages/ConfirmEmail';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import AdminUsers from './pages/AdminUsers';
+import Privacy from './pages/Privacy';
 import { RequireAuth, RequireAnonymous, RequireAdmin } from './auth/routes';
 
 /*
@@ -34,6 +35,14 @@ export default function App() {
             </RequireAnonymous>
           }
         />
+        {/*
+          Polityka prywatności BEZ ŻADNEGO STRAŻNIKA, ani RequireAuth, ani RequireAnonymous.
+          Czyta ją ktoś, kto dopiero rozważa założenie konta, i ten sam adres podaje się
+          w konsoli Google Cloud przy weryfikacji ekranu zgody - a tam wchodzi robot bez
+          sesji. RequireAnonymous odciąłby dodatkowo zalogowanych, czyli tych, których
+          zgoda już dotyczy.
+        */}
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="/confirm-email" element={<ConfirmEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password" element={<ResetPassword />} />

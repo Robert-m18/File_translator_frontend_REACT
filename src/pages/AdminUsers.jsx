@@ -9,6 +9,7 @@ import {
   unblockUser,
   unlockUser,
   forceLogoutUser,
+  deleteUser,
 } from '../api/admin';
 
 const PAGE_SIZE = 20;
@@ -60,6 +61,12 @@ function formatDate(value) {
  * POWÓD BLOKADY WPISUJE SIĘ W WIERSZU, nie w window.prompt: jest częścią śladu audytowego,
  * który przeczyta następny administrator, więc ma być polem formularza z widoczną etykietą,
  * a nie okienkiem przeglądarki, które da się odklikać w pół sekundy.
+ *
+ * USUNIĘCIE KONTA JEST JEDYNĄ AKCJĄ NIEODWRACALNĄ i dlatego jako jedyna wymaga drugiego
+ * kliknięcia. Pytanie rozwija się w wierszu, wymienia z nazwy wszystko, co zniknie, i mówi
+ * wprost, że blokada jest tańszą odpowiedzią na "odciąć dostęp". Reszta akcji zostaje
+ * jednoklikowa - potwierdzanie czegoś, co da się cofnąć jednym przyciskiem obok, uczy
+ * tylko odklikiwania pytań bez czytania.
  */
 export default function AdminUsers() {
   const { user: me } = useAuth();
@@ -77,6 +84,15 @@ export default function AdminUsers() {
 
   const [blockingId, setBlockingId] = useState(null);
   const [reason, setReason] = useState('');
+
+  /*
+   * Wiersz, dla którego rozwinięto pytanie "czy na pewno usunąć". Osobny stan od blockingId
+   * i wzajemnie się wykluczające (otwarcie jednego zamyka drugie): oba rozwijają się pod
+   * wierszem na całą jego szerokość, więc dwa naraz to dwa bloki jeden na drugim, w których
+   * łatwo kliknąć nie ten przycisk, co trzeba - przy operacji nieodwracalnej to zły moment
+   * na niespodziankę.
+   */
+  const [deletingId, setDeletingId] = useState(null);
 
   const refresh = useCallback(async () => {
     setLoading(true);
@@ -144,6 +160,36 @@ export default function AdminUsers() {
     );
     setBlockingId(null);
     setReason('');
+  }
+
+  /**
+   * Kasowanie konta. NIE idzie przez runAction, bo tamten podmienia wiersz odpowiedzią
+   * z serwera - a tutaj odpowiedzią jest 204 bez ciała i wiersza nie ma już czym podmienić.
+   *
+   * Usuwamy wiersz LOKALNIE, zamiast przeładowywać listę, i to jest świadome: refresh()
+   * czyści komunikat (celowo, bo opisuje konkretny wiersz), więc po odświeżeniu
+   * administrator nie zobaczyłby potwierdzenia tego, co przed chwilą zrobił. Licznik
+   * kont zmniejszamy razem z wierszem, żeby nagłówek nie kłamał; podział na strony
+   * przeliczy się przy najbliższym wyszukiwaniu albo przejściu na inną stronę.
+   */
+  async function handleDelete(target) {
+    setBusyId(target.id);
+    setError(null);
+    setNotice(null);
+    try {
+      await deleteUser(target.id);
+      setDeletingId(null);
+      setUsers((current) => current.filter((row) => row.id !== target.id));
+      setPageInfo((current) => ({
+        ...current,
+        totalElements: Math.max(0, current.totalElements - 1),
+      }));
+      setNotice('Konto usunięte razem z sesjami, zleceniami i plikami.');
+    } catch (err) {
+      setError(err);
+    } finally {
+      setBusyId(null);
+    }
   }
 
   return (
@@ -247,6 +293,7 @@ export default function AdminUsers() {
                       disabled={busy}
                       onClick={() => {
                         setBlockingId(blockingId === row.id ? null : row.id);
+                        setDeletingId(null);
                         setReason('');
                       }}
                     >
@@ -285,6 +332,24 @@ export default function AdminUsers() {
                   >
                     Wymuś wylogowanie
                   </button>
+
+                  {/*
+                    Własnego konta nie da się usunąć - serwer odpowiada 409 CANNOT_DELETE_SELF
+                    niezależnie od tego, co pokazuje ekran. Ukrycie przycisku jest WYGODĄ,
+                    nie zabezpieczeniem: nie ma po co proponować akcji, która zawsze odmówi.
+                  */}
+                  {row.id !== me?.id && (
+                    <button
+                      className="button button-ghost"
+                      disabled={busy}
+                      onClick={() => {
+                        setDeletingId(deletingId === row.id ? null : row.id);
+                        setBlockingId(null);
+                      }}
+                    >
+                      Usuń
+                    </button>
+                  )}
                 </div>
 
                 {blockingId === row.id && (
@@ -311,6 +376,47 @@ export default function AdminUsers() {
                       {busy ? 'Blokowanie…' : 'Potwierdź blokadę'}
                     </button>
                   </form>
+                )}
+
+                {/*
+                  Potwierdzenie usunięcia. NIE window.confirm - z tego samego powodu, dla
+                  którego powód blokady jest polem w wierszu: okienko przeglądarki odklikuje
+                  się odruchowo i nie ma miejsca na wypisanie, co dokładnie zniknie.
+                  Nie jest to też <form>: Enter nie ma prawa uruchamiać operacji, po której
+                  nie ma powrotu.
+
+                  Adres konta stoi w treści pytania celowo - w liście z dwudziestoma wierszami
+                  to jedyna rzecz, która potwierdza, że rozwinął się TEN wiersz, o który
+                  chodziło.
+                */}
+                {deletingId === row.id && (
+                  <div className="job-confirm">
+                    <p className="confirm-warning">
+                      Usunąć konto {row.email} na stałe?
+                    </p>
+                    <p className="field-hint">
+                      Znikną: konto, wszystkie jego sesje, zlecenia tłumaczenia i wgrane pliki.
+                      Tej operacji nie da się cofnąć - konta nie odzyskasz nawet z kopii
+                      zapasowej panelu, bo takiej nie ma. Jeśli chodzi tylko o odcięcie
+                      dostępu, użyj blokady: zostawia dane na miejscu i da się ją zdjąć.
+                    </p>
+                    <div className="job-actions">
+                      <button
+                        className="button"
+                        disabled={busy}
+                        onClick={() => handleDelete(row)}
+                      >
+                        {busy ? 'Usuwanie…' : 'Tak, usuń trwale'}
+                      </button>
+                      <button
+                        className="button button-ghost"
+                        disabled={busy}
+                        onClick={() => setDeletingId(null)}
+                      >
+                        Anuluj
+                      </button>
+                    </div>
+                  </div>
                 )}
               </li>
             );
