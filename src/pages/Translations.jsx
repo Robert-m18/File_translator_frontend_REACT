@@ -45,16 +45,37 @@ export default function Translations() {
   const [sending, setSending] = useState(false);
   const fileInput = useRef(null);
 
+  /*
+   * Numer ostatniego rozpoczętego odczytu listy. Wygrywa odczyt rozpoczęty najpóźniej, a nie
+   * ten, który najszybciej wrócił.
+   *
+   * Bez tego dwie odpowiedzi w locie nadpisują się w kolejności przypadkowej, a o dwie naraz
+   * jest tu łatwo: odpytywanie chodzi w stałym rytmie, więc wystarczy jedna wolniejsza
+   * odpowiedź, żeby zachodziła na następną. Najbardziej widać to po skasowaniu zlecenia -
+   * odczyt sprzed kasowania potrafi wrócić po nim i przywrócić na ekran wiersz, którego już
+   * nie ma. Objaw znika przy kolejnym odpytaniu, więc wygląda na mignięcie interfejsu,
+   * a nie na wyścig odpowiedzi.
+   */
+  const lastRead = useRef(0);
+
   const refresh = useCallback(async ({ quiet = false } = {}) => {
+    const read = ++lastRead.current;
     if (!quiet) setLoading(true);
     try {
       const page = await listTranslations();
+      // Rozpoczęto nowszy odczyt, więc ten jest już nieaktualny i nie ma prawa niczego ustawić.
+      if (read !== lastRead.current) return;
       setJobs(page.content ?? []);
       setError(null);
     } catch (err) {
+      // Także błąd, inaczej spóźniona awaria sieci wyświetliłaby komunikat nad poprawnie
+      // wczytaną, świeższą listą.
+      if (read !== lastRead.current) return;
       setError(err);
     } finally {
-      if (!quiet) setLoading(false);
+      // Wskaźnik ładowania gasi wyłącznie ten odczyt, który go zapalił - inaczej spóźniona
+      // odpowiedź zgasiłaby go w trakcie trwania nowszego.
+      if (!quiet && read === lastRead.current) setLoading(false);
     }
   }, []);
 
